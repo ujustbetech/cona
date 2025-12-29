@@ -150,15 +150,17 @@ body {
     <h3>Select Sub-Department</h3>
 
     <div class="subdept-list">
-        {% for sub in subdepartments %}
-            <a href="{{ url_for('kras',
-                                department=department,
-                                subdepartment=sub) }}"
-               class="action-btn btn-teal">
-                {{ sub }}
-                <span class="arrow">➜</span>
-            </a>
-        {% endfor %}
+        {% for sub_id, sub_name in subdepartments %}
+<a href="{{ url_for('kras',
+                    department='sales',
+                    subdepartment=sub_id) }}"
+   class="action-btn btn-teal">
+    {{ sub_name }}
+    <span class="arrow">➜</span>
+</a>
+{% endfor %}
+
+
     </div>
 
     <a href="{{ url_for('departments') }}"

@@ -6,6 +6,7 @@ from flask_caching import Cache
 from urllib.parse import unquote
 
 
+
 # ---------------- COMPONENT IMPORTS ----------------
 from logic.component1_transfers import run_component1
 from logic.component2_inventory import run_component2
@@ -21,7 +22,12 @@ from logic.component7_cost_optimization import run_component7
 # --------------------------------------------------
 # APP INIT
 # --------------------------------------------------
-app = Flask(__name__)
+
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
 app.secret_key = "kt-secret-key"
 
 cache = Cache(app, config={
@@ -138,36 +144,26 @@ def subdepartments(department):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # 🔥 DECODE URL
-    department = unquote(department).strip()
+    if department == "purchase":
+        return redirect(url_for("kras", department="purchase"))
 
-    # =========================
-    # PURCHASE → DIRECT TO KRAs
-    # =========================
-    if department == "Purchase":
-        return redirect(url_for("kras", department=department))
-
-    # =========================
-    # SALES & MARKETING
-    # =========================
-    if department == "Sales & Marketing":
+    if department == "sales":
         subdeps = [
-            "LED",
-            "Marketing",
-            "Packaging",
-            "Procurement & Vendor Management"
+            ("led", "LED"),
+            ("marketing", "Marketing"),
+            ("packaging", "Packaging"),
+            ("procurement", "Procurement & Vendor Management")
         ]
 
         return render_template(
             "subdepartments.html",
-            department=department,
+            department="Sales & Marketing",
             subdepartments=subdeps
         )
 
-    # =========================
-    # SAFETY FALLBACK
-    # =========================
     return redirect(url_for("departments"))
+
+
 
 
 # --------------------------------------------------
@@ -179,61 +175,43 @@ def kras(department, subdepartment=None):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    department = unquote(department)
-    subdepartment = unquote(subdepartment) if subdepartment else None
-
-    # =========================
-    # PURCHASE (NO SUB-DEPTS)
-    # =========================
-    if department == "Purchase":
+    # PURCHASE
+    if department == "purchase":
         kras = [
             "Internal Raw Material Transfer",
             "Sales Order & Invoice Management",
             "Sales Order & Invoice Management – Short Closure",
-            "Order Delivery Tracking"
+            "Order Delivery Tracking",
         ]
 
         return render_template(
             "kras.html",
-            department=department,
+            department="Purchase",
             subdepartment=None,
-            kras=kras
+            kras=kras,
         )
 
-    # =========================
-    # SALES & MARKETING
-    # =========================
-    if department == "Sales & Marketing":
+    # SALES
+    if department == "sales":
+        kra_map = {
+            "led": ["Inventory and Supply Chain Mgmt"],
+            "marketing": ["Seasonal Campaign Execution", "Vendor Management"],
+            "packaging": ["Cost Optimization"],
+            "procurement": ["Cost Optimization", "Business Development"],
+        }
 
-        if subdepartment == "LED":
-            kras = ["Inventory and Supply Chain Mgmt"]
-
-        elif subdepartment == "Marketing":
-            kras = [
-                "Seasonal Campaign Execution",
-                "Vendor Management"
-            ]
-
-        elif subdepartment == "Packaging":
-            kras = ["Cost Optimization"]
-
-        elif subdepartment == "Procurement & Vendor Management":
-            kras = [
-                "Cost Optimization",
-                "Business Development"
-            ]
-
-        else:
-            kras = []
+        kras = kra_map.get(subdepartment, [])
 
         return render_template(
             "kras.html",
-            department=department,
+            department="Sales & Marketing",
             subdepartment=subdepartment,
-            kras=kras
+            kras=kras,
         )
 
     return redirect(url_for("departments"))
+
+
 
 
 # --------------------------------------------------
