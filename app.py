@@ -157,6 +157,58 @@ def subdepartments(department):
 
 
 # --------------------------------------------------
+# KRAs
+# --------------------------------------------------
+@app.route("/kras/<department>")
+@app.route("/kras/<department>/<subdepartment>")
+def kras(department, subdepartment=None):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    department = department.strip()
+    subdepartment = subdepartment.strip() if subdepartment else None
+
+    if department == "Purchase":
+        kras = [
+            "Internal Raw Material Transfer",
+            "Sales Order & Invoice Management",
+            "Sales Order & Invoice Management – Short Closure",
+            "Order Delivery Tracking"
+        ]
+
+    elif department == "Sales & Marketing" and subdepartment == "LED":
+        kras = [
+            "Inventory and Supply Chain Mgmt"
+        ]
+
+    elif department == "Sales & Marketing" and subdepartment == "Marketing":
+        kras = [
+            "Seasonal Campaign Execution",
+            "Vendor Management"
+        ]
+
+    elif department == "Sales & Marketing" and subdepartment == "Packaging":
+        kras = [
+            "Cost Optimization"
+        ]
+
+    elif department == "Sales & Marketing" and subdepartment == "Procurement & Vendor Management":
+        kras = [
+            "Cost Optimization",
+            "Business Development"
+        ]
+
+    else:
+        kras = []
+
+    return render_template(
+        "kras.html",
+        department=department,
+        subdepartment=subdepartment,
+        kras=kras
+    )
+
+# --------------------------------------------------
 # COMPONENT 1 — INTERNAL TRANSFER
 # --------------------------------------------------
 @app.route("/dashboard/component1")
