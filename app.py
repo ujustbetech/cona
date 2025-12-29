@@ -160,15 +160,20 @@ def subdepartments(department):
 # --------------------------------------------------
 # KRAs
 # --------------------------------------------------
+from urllib.parse import unquote
+
 @app.route("/kras/<department>")
 @app.route("/kras/<department>/<subdepartment>")
 def kras(department, subdepartment=None):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    department = department.strip()
-    subdepartment = subdepartment.strip() if subdepartment else None
+    department = unquote(department)
+    subdepartment = unquote(subdepartment) if subdepartment else None
 
+    # =========================
+    # PURCHASE (NO SUB-DEPTS)
+    # =========================
     if department == "Purchase":
         kras = [
             "Internal Raw Material Transfer",
@@ -177,37 +182,48 @@ def kras(department, subdepartment=None):
             "Order Delivery Tracking"
         ]
 
-    elif department == "Sales & Marketing" and subdepartment == "LED":
-        kras = [
-            "Inventory and Supply Chain Mgmt"
-        ]
+        return render_template(
+            "kras.html",
+            department=department,
+            subdepartment=None,
+            kras=kras
+        )
 
-    elif department == "Sales & Marketing" and subdepartment == "Marketing":
-        kras = [
-            "Seasonal Campaign Execution",
-            "Vendor Management"
-        ]
+    # =========================
+    # SALES & MARKETING
+    # =========================
+    if department == "Sales & Marketing":
 
-    elif department == "Sales & Marketing" and subdepartment == "Packaging":
-        kras = [
-            "Cost Optimization"
-        ]
+        if subdepartment == "LED":
+            kras = ["Inventory and Supply Chain Mgmt"]
 
-    elif department == "Sales & Marketing" and subdepartment == "Procurement & Vendor Management":
-        kras = [
-            "Cost Optimization",
-            "Business Development"
-        ]
+        elif subdepartment == "Marketing":
+            kras = [
+                "Seasonal Campaign Execution",
+                "Vendor Management"
+            ]
 
-    else:
-        kras = []
+        elif subdepartment == "Packaging":
+            kras = ["Cost Optimization"]
 
-    return render_template(
-        "kras.html",
-        department=department,
-        subdepartment=subdepartment,
-        kras=kras
-    )
+        elif subdepartment == "Procurement & Vendor Management":
+            kras = [
+                "Cost Optimization",
+                "Business Development"
+            ]
+
+        else:
+            kras = []
+
+        return render_template(
+            "kras.html",
+            department=department,
+            subdepartment=subdepartment,
+            kras=kras
+        )
+
+    return redirect(url_for("departments"))
+
 
 # --------------------------------------------------
 # COMPONENT 1 — INTERNAL TRANSFER
