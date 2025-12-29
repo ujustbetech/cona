@@ -125,10 +125,36 @@ def upload_component(component):
 def departments():
     if "user" not in session:
         return redirect(url_for("login"))
+
     return render_template(
         "departments.html",
         departments=["Purchase", "Sales & Marketing"]
     )
+
+@app.route("/subdepartments/<department>")
+def subdepartments(department):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    department = department.strip()
+
+    if department == "Purchase":
+        # Directly go to Purchase KRAs
+        return redirect(url_for("kras", department=department))
+
+    subdeps = [
+        "LED",
+        "Marketing",
+        "Packaging",
+        "Procurement & Vendor Management"
+    ]
+
+    return render_template(
+        "subdepartments.html",
+        department=department,
+        subdepartments=subdeps
+    )
+
 
 # --------------------------------------------------
 # COMPONENT 1 — INTERNAL TRANSFER
