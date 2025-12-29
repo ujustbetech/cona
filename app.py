@@ -138,10 +138,11 @@ def subdepartments(department):
 
     department = department.strip()
 
+    # 🔥 PURCHASE → DIRECT TO KRAs
     if department == "Purchase":
-        # Directly go to Purchase KRAs
         return redirect(url_for("kras", department=department))
 
+    # 🔥 ONLY Sales & Marketing has sub-departments
     subdeps = [
         "LED",
         "Marketing",
