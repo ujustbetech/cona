@@ -76,19 +76,18 @@
 
     <div class="dept-list">
 
-    <!-- PURCHASE → DIRECTLY TO KRA -->
-    <a href="{{ url_for('kras', department='Purchase') }}"
-       class="action-btn">
-        Purchase
-        <span class="arrow">➜</span>
-    </a>
+    <!-- PURCHASE → DIRECTLY TO KRAs -->
+<a href="{{ url_for('kras', department='purchase') }}" class="action-btn">
+    Purchase
+    <span class="arrow">➜</span>
+</a>
 
-    <!-- SALES & MARKETING → SUB-DEPARTMENTS -->
-    <a href="{{ url_for('subdepartments', department='Sales & Marketing') }}"
-       class="action-btn">
-        Sales & Marketing
-        <span class="arrow">➜</span>
-    </a>
+<!-- SALES & MARKETING → SUB-DEPARTMENTS -->
+<a href="{{ url_for('subdepartments', department='Sales & Marketing') }}" class="action-btn">
+    Sales & Marketing
+    <span class="arrow">➜</span>
+</a>
+
 
 </div>
 

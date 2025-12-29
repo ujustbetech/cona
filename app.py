@@ -103,10 +103,10 @@ def subdepartments(department):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    if department == "purchase":
-        return redirect(url_for("kras", department="purchase"))
+    department = department.lower()
 
-    if department == "sales":
+    # ONLY Sales has sub-departments
+    if department == "Sales & Marketing":
         return render_template(
             "subdepartments.html",
             department="Sales & Marketing",
@@ -114,11 +114,13 @@ def subdepartments(department):
                 ("led", "LED"),
                 ("marketing", "Marketing"),
                 ("packaging", "Packaging"),
-                ("procurement", "Procurement & Vendor Management")
+                ("procurement", "Procurement & Vendor Management"),
             ]
         )
 
+    # Anything else → back
     return redirect(url_for("departments"))
+
 
 # --------------------------------------------------
 # KRAs
@@ -138,7 +140,7 @@ def kras(department, subdepartment=None):
         ]
         return render_template("kras.html", department="Purchase", kras=kras)
 
-    if department == "sales":
+    if department == "Sales & Marketing":
         kra_map = {
             "led": [("component2", "Inventory and Supply Chain Mgmt")],
             "marketing": [
