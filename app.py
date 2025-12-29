@@ -33,6 +33,52 @@ cache = Cache(app, config={
 USERS = {"admin": "admin123"}
 
 # --------------------------------------------------
+# KPI → REQUIRED FILES CONFIG
+# --------------------------------------------------
+KPI_FILES = {
+    "component1": [
+        ("transfer_file", "Transfer Lines.xlsx")
+    ],
+
+    "component2": [
+        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    ],
+
+    "component3": [
+        ("po_file", "Purchase Order.xlsx"),
+        ("receipt_file", "Posted Purchase Receipts.xlsx"),
+        ("lines_file", "Purchase Lines.xlsx")
+    ],
+
+    "component4": [
+        ("sales_order_file", "Sales Order.xlsx"),
+        ("sales_invoice_file", "Posted Sales Invoice.xlsx")
+    ],
+
+    "component5": [
+        ("po_file", "Purchase Order.xlsx"),
+        ("receipt_file", "Posted Purchase Receipts.xlsx"),
+        ("lines_file", "Purchase Lines.xlsx")
+    ],
+
+    "component5a": [
+        ("items_file", "Items.xlsx"),
+        ("po_file", "Purchase Order.xlsx"),
+        ("receipt_file", "Posted Purchase Receipts.xlsx"),
+        ("lines_file", "Purchase Lines.xlsx")
+    ],
+
+    "component6": [
+        ("sales_order_file", "Sales Order.xlsx")
+    ],
+
+    "component7": [
+        ("items_file", "Items.xlsx"),
+        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    ]
+}
+
+# --------------------------------------------------
 # LOGIN
 # --------------------------------------------------
 @app.route("/", methods=["GET", "POST"])
@@ -40,59 +86,37 @@ def login():
     if request.method == "POST":
         if USERS.get(request.form["username"]) == request.form["password"]:
             session["user"] = request.form["username"]
-            return redirect(url_for("upload"))
+            return redirect(url_for("departments"))
         return render_template("login.html", error="Invalid credentials")
     return render_template("login.html")
 
 # --------------------------------------------------
-# UPLOAD (GENERIC – ALL FILES)
+# KPI-SPECIFIC UPLOAD
 # --------------------------------------------------
-@app.route("/upload", methods=["GET", "POST"])
-def upload():
+@app.route("/upload/<component>", methods=["GET", "POST"])
+def upload_component(component):
     if "user" not in session:
         return redirect(url_for("login"))
 
+    files_needed = KPI_FILES.get(component)
+    if not files_needed:
+        return "Invalid component", 404
+
     if request.method == "POST":
-        try:
-            files = request.files
+        for field, _ in files_needed:
+            file = request.files.get(field)
+            if not file:
+                return f"Missing file: {field}", 400
 
-            # ---- MASTER DATA ----
-            if "transfer_file" in files:
-                cache.set("transfer_df", pd.read_excel(files["transfer_file"]))
+            cache.set(field.replace("_file", "_df"), pd.read_excel(file))
 
-            if "ledger_file" in files:
-                cache.set("ledger_df", pd.read_excel(files["ledger_file"]))
+        return redirect(url_for(f"{component}_dashboard"))
 
-            if "items_file" in files:
-                cache.set("items_df", pd.read_excel(files["items_file"]))
-
-            # ---- PURCHASE ----
-            if "po_file" in files:
-                cache.set("po_df", pd.read_excel(files["po_file"]))
-
-            if "receipt_file" in files:
-                cache.set("receipt_df", pd.read_excel(files["receipt_file"]))
-
-            if "lines_file" in files:
-                cache.set("lines_df", pd.read_excel(files["lines_file"]))
-
-            # ---- SALES ----
-            if "sales_order_file" in files:
-                cache.set("sales_order_df", pd.read_excel(files["sales_order_file"]))
-
-            if "sales_invoice_file" in files:
-                cache.set("sales_invoice_df", pd.read_excel(files["sales_invoice_file"]))
-
-            # ---- VENDOR PERFORMANCE ----
-            if "vendor_perf_file" in files:
-                cache.set("vendor_performance_df", pd.read_excel(files["vendor_perf_file"]))
-
-        except Exception as e:
-            return f"Upload failed: {e}", 500
-
-        return redirect(url_for("departments"))
-
-    return render_template("upload.html")
+    return render_template(
+        "upload_kpi.html",
+        component=component,
+        files=files_needed
+    )
 
 # --------------------------------------------------
 # DEPARTMENTS
@@ -101,43 +125,41 @@ def upload():
 def departments():
     if "user" not in session:
         return redirect(url_for("login"))
-    return render_template("departments.html", departments=["Purchase", "Sales & Marketing"])
+    return render_template(
+        "departments.html",
+        departments=["Purchase", "Sales & Marketing"]
+    )
 
 # --------------------------------------------------
-# COMPONENT 1
+# COMPONENT 1 — INTERNAL TRANSFER
 # --------------------------------------------------
 @app.route("/dashboard/component1")
 def component1_dashboard():
     df = cache.get("transfer_df")
     if df is None:
-        return redirect(url_for("upload"))
+        return redirect(url_for("upload_component", component="component1"))
 
     summary, df = run_component1(df)
-
-    total = sum(summary.values())
-    completed = summary.get("Completed", 0)
-    on_time_pct = round((completed / total) * 100, 2) if total else 0
 
     status_df = df["Status"].value_counts().reset_index()
     status_df.columns = ["Status", "Count"]
 
-    status_bar = px.bar(status_df, x="Status", y="Count", text="Count")
+    bar = px.bar(status_df, x="Status", y="Count", text="Count")
 
     return render_template(
         "component1.html",
         summary=summary,
-        on_time_pct=on_time_pct,
-        status_bar=pio.to_html(status_bar, full_html=False)
+        bar_chart=pio.to_html(bar, full_html=False)
     )
 
 # --------------------------------------------------
-# COMPONENT 2
+# COMPONENT 2 — INVENTORY
 # --------------------------------------------------
 @app.route("/dashboard/component2")
 def component2_dashboard():
     df = cache.get("ledger_df")
     if df is None:
-        return redirect(url_for("upload"))
+        return redirect(url_for("upload_component", component="component2"))
 
     summary, _ = run_component2(df)
 
@@ -158,18 +180,18 @@ def component2_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 3A
+# COMPONENT 3A — VENDOR ON-TIME
 # --------------------------------------------------
 @app.route("/dashboard/component3a")
 def component3a_dashboard():
-    df_po = cache.get("po_df")
-    df_rcpt = cache.get("receipt_df")
-    df_lines = cache.get("lines_df")
+    if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
+        return redirect(url_for("upload_component", component="component3"))
 
-    if not all([df_po, df_rcpt, df_lines]):
-        return redirect(url_for("upload"))
-
-    metrics, vendor_df = run_component3a(df_po, df_rcpt, df_lines)
+    metrics, vendor_df = run_component3a(
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
 
     bar = px.bar(vendor_df, x="Vendor", y="On_Time_Pct", text="On_Time_Pct")
 
@@ -180,18 +202,18 @@ def component3a_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 3B
+# COMPONENT 3B — ORDER DELIVERY
 # --------------------------------------------------
 @app.route("/dashboard/component3b")
 def component3b_dashboard():
-    df_po = cache.get("po_df")
-    df_rcpt = cache.get("receipt_df")
-    df_lines = cache.get("lines_df")
+    if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
+        return redirect(url_for("upload_component", component="component3"))
 
-    if not all([df_po, df_rcpt, df_lines]):
-        return redirect(url_for("upload"))
-
-    metrics, df = run_component3b(df_po, df_rcpt, df_lines)
+    metrics, df = run_component3b(
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
 
     pie_df = pd.DataFrame({
         "Status": ["On-Time", "Delayed"],
@@ -211,13 +233,13 @@ def component3b_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 3C
+# COMPONENT 3C — VENDOR PERFORMANCE
 # --------------------------------------------------
 @app.route("/dashboard/component3c")
 def component3c_dashboard():
     df = cache.get("vendor_performance_df")
     if df is None:
-        return redirect(url_for("upload"))
+        return redirect(url_for("upload_component", component="component3"))
 
     metrics, _, bucket_df = run_component3c(df)
 
@@ -232,39 +254,39 @@ def component3c_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 4
+# COMPONENT 4 — SALES O2C
 # --------------------------------------------------
 @app.route("/dashboard/component4")
 def component4_dashboard():
-    df_so = cache.get("sales_order_df")
-    df_inv = cache.get("sales_invoice_df")
+    if not all([cache.get("sales_order_df"), cache.get("sales_invoice_df")]):
+        return redirect(url_for("upload_component", component="component4"))
 
-    if not all([df_so, df_inv]):
-        return redirect(url_for("upload"))
-
-    metrics, df = run_component4(df_so, df_inv)
-
-    return render_template(
-        "component4.html",
-        metrics=metrics
+    metrics, _ = run_component4(
+        cache.get("sales_order_df"),
+        cache.get("sales_invoice_df")
     )
 
+    return render_template("component4.html", metrics=metrics)
+
 # --------------------------------------------------
-# COMPONENT 5
+# COMPONENT 5 — PO SLA
 # --------------------------------------------------
 @app.route("/dashboard/component5")
 def component5_dashboard():
-    df_po = cache.get("po_df")
-    df_rcpt = cache.get("receipt_df")
-    df_lines = cache.get("lines_df")
+    if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
+        return redirect(url_for("upload_component", component="component5"))
 
-    if not all([df_po, df_rcpt, df_lines]):
-        return redirect(url_for("upload"))
+    metrics, df = run_component5(
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
 
-    metrics, df = run_component5(df_po, df_rcpt, df_lines)
-
-    bar = px.bar(df.groupby("Month").size().reset_index(name="Completed POs"),
-                 x="Month", y="Completed POs")
+    bar = px.bar(
+        df.groupby("Month").size().reset_index(name="Completed POs"),
+        x="Month",
+        y="Completed POs"
+    )
 
     return render_template(
         "component5.html",
@@ -273,19 +295,24 @@ def component5_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 5A
+# COMPONENT 5A — RM SLA
 # --------------------------------------------------
-@app.route("/dashboard/component5a_rm")
-def component5a_rm_dashboard():
-    df_items = cache.get("items_df")
-    df_po = cache.get("po_df")
-    df_rcpt = cache.get("receipt_df")
-    df_lines = cache.get("lines_df")
+@app.route("/dashboard/component5a")
+def component5a_dashboard():
+    if not all([
+        cache.get("items_df"),
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    ]):
+        return redirect(url_for("upload_component", component="component5a"))
 
-    if not all([df_items, df_po, df_rcpt, df_lines]):
-        return redirect(url_for("upload"))
-
-    metrics, df_monthly = run_component5a_rm(df_items, df_po, df_rcpt, df_lines)
+    metrics, df_monthly = run_component5a_rm(
+        cache.get("items_df"),
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
 
     bar = px.bar(df_monthly, x="Month", y="PO_Count", color="SLA_Status")
 
@@ -296,19 +323,22 @@ def component5a_rm_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 6
+# COMPONENT 6 — SHORT CLOSURE
 # --------------------------------------------------
 @app.route("/dashboard/component6")
 def component6_dashboard():
     df = cache.get("sales_order_df")
     if df is None:
-        return redirect(url_for("upload"))
+        return redirect(url_for("upload_component", component="component6"))
 
     metrics, df_monthly = run_component6(df)
 
-    bar = px.bar(df_monthly, x="Month",
-                 y=["Short_Closed", "Not_Short_Closed"],
-                 barmode="stack")
+    bar = px.bar(
+        df_monthly,
+        x="Month",
+        y=["Short_Closed", "Not_Short_Closed"],
+        barmode="stack"
+    )
 
     return render_template(
         "component6.html",
@@ -317,18 +347,18 @@ def component6_dashboard():
     )
 
 # --------------------------------------------------
-# COMPONENT 7A / 7B
+# COMPONENT 7 — COST OPTIMIZATION
 # --------------------------------------------------
 @app.route("/dashboard/component7a")
 @app.route("/dashboard/component7b")
 def component7_dashboard():
-    df_items = cache.get("items_df")
-    df_ledger = cache.get("ledger_df")
+    if not all([cache.get("items_df"), cache.get("ledger_df")]):
+        return redirect(url_for("upload_component", component="component7"))
 
-    if not all([df_items, df_ledger]):
-        return redirect(url_for("upload"))
-
-    df, _, company_view = run_component7(df_items, df_ledger)
+    df, _, company_view = run_component7(
+        cache.get("items_df"),
+        cache.get("ledger_df")
+    )
 
     summary = df["Stock_Status"].value_counts().to_dict()
 

@@ -1,0 +1,11 @@
+<h2>{{ title }}</h2>
+
+<form method="POST" enctype="multipart/form-data">
+  {% for name, label in files %}
+    <p>
+      {{ label }}:
+      <input type="file" name="{{ name }}" required>
+    </p>
+  {% endfor %}
+  <button type="submit">Upload & Continue</button>
+</form>
