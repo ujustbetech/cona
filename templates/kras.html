@@ -8,8 +8,8 @@
 
     <style>
         body {
-            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #082F6B, #0B3C8A);
+            font-family: "Inter", "Segoe UI", sans-serif;
             color: #ffffff;
             margin: 0;
             padding: 40px;
@@ -27,29 +27,58 @@
         }
 
         h2 {
-            margin-bottom: 10px;
+            font-size: 26px;
+            margin-bottom: 6px;
         }
 
         h3 {
-            margin-bottom: 25px;
-            font-weight: 500;
-            opacity: 0.9;
+            font-size: 16px;
+            font-weight: 400;
+            color: #cbd5e1;
+            margin-bottom: 30px;
         }
 
         .kra-list {
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 20px;
+        }
+
+        .action-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 22px 30px;
+            border-radius: 50px;
+            background: linear-gradient(90deg, #0B3C8A, #2563EB);
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+        }
+
+        .action-btn:hover {
+            background: linear-gradient(90deg, #F37021, #FF8A3D);
+            transform: translateY(-2px);
+        }
+
+        .arrow {
+            font-size: 26px;
+            transition: transform 0.3s ease;
+        }
+
+        .action-btn:hover .arrow {
+            transform: translateX(6px);
         }
 
         .back-btn {
-            margin-top: 40px;
-            width: 240px;
+            margin-top: 45px;
+            width: 260px;
         }
 
-        /* -------------------- */
-        /* PAGE LOADER STYLES   */
-        /* -------------------- */
+        /* ---------- PAGE LOADER ---------- */
         #page-loader {
             position: fixed;
             inset: 0;
@@ -62,84 +91,21 @@
 
         .loader-content {
             text-align: center;
-            color: white;
         }
 
         .spinner {
             width: 55px;
             height: 55px;
-            border: 5px solid rgba(255, 255, 255, 0.2);
+            border: 5px solid rgba(255,255,255,0.25);
             border-top: 5px solid #F37021;
             border-radius: 50%;
             animation: spin 0.9s linear infinite;
-            margin: 0 auto 12px;
+            margin: 0 auto 14px;
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
-
-        /* ---------- PAGE BACKGROUND ---------- */
-body {
-  background: linear-gradient(135deg, #082F6B, #0B3C8A);
-  font-family: "Inter", "Segoe UI", sans-serif;
-  color: #ffffff;
-}
-
-/* ---------- PAGE HEADER ---------- */
-.page-title {
-  font-size: 26px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.page-subtitle {
-  font-size: 16px;
-  color: #cbd5e1;
-  margin-bottom: 30px;
-}
-
-/* ---------- DEPARTMENT LIST ---------- */
-.department-list {
-  max-width: 900px;
-}
-
-/* ---------- DEPARTMENT BUTTON ---------- */
-.department-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 22px 30px;
-  border-radius: 50px;
-  background: linear-gradient(90deg, #0B3C8A, #2563EB);
-  color: white;
-  text-decoration: none;
-  font-size: 18px;
-  font-weight: 500;
-  margin-bottom: 22px;
-  transition: all 0.3s ease;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
-}
-
-/* ---------- HOVER EFFECT ---------- */
-.department-btn:hover {
-  background: linear-gradient(90deg, #F37021, #FF8A3D);
-  transform: translateY(-2px);
-}
-
-/* ---------- ARROW ---------- */
-.department-btn .arrow {
-  font-size: 26px;
-  color: white;
-  transition: transform 0.3s ease;
-}
-
-.department-btn:hover .arrow {
-  transform: translateX(6px);
-}
-
     </style>
 </head>
 
@@ -153,44 +119,27 @@ body {
         {% if subdepartment %}
             → {{ subdepartment }}
         {% endif %}
+        → KRAs
     </div>
 
     <h2>{{ department }}</h2>
-    <h3>Key Result Areas (KRAs)</h3>
+    <h3>Select Key Result Area</h3>
 
     <!-- KRA LIST -->
     <div class="kra-list">
         {% for kra in kras %}
-            {% if subdepartment %}
-                <a href="{{ url_for(
-                        'kpis',
-                        department=department,
-                        subdepartment=subdepartment,
-                        kra=kra
-                    ) }}"
-                   class="action-btn btn-blue"
-                   onclick="showLoader()">
-                    {{ kra }}
-                    <span class="arrow">➜</span>
-                </a>
-            {% else %}
-                <a href="{{ url_for(
-                        'kpis',
-                        department=department,
-                        kra=kra
-                    ) }}"
-                   class="action-btn btn-blue"
-                   onclick="showLoader()">
-                    {{ kra }}
-                    <span class="arrow">➜</span>
-                </a>
-            {% endif %}
+            <a href="{{ url_for('kpis', kra=kra) }}"
+               class="action-btn"
+               onclick="showLoader()">
+                {{ kra }}
+                <span class="arrow">➜</span>
+            </a>
         {% endfor %}
     </div>
 
-    <!-- BACK BUTTON -->
+    <!-- BACK -->
     <a href="{{ url_for('departments') }}"
-       class="action-btn btn-purple back-btn"
+       class="action-btn back-btn"
        onclick="showLoader()">
         Back to Departments
         <span class="arrow">➜</span>
@@ -198,29 +147,23 @@ body {
 
 </div>
 
-<!-- PAGE LOADER -->
+<!-- LOADER -->
 <div id="page-loader">
     <div class="loader-content">
         <div class="spinner"></div>
-        <p>Loading dashboard…</p>
+        <p>Loading…</p>
     </div>
 </div>
 
-<!-- JAVASCRIPT -->
 <script>
     function showLoader() {
         const loader = document.getElementById("page-loader");
-        if (loader) {
-            loader.style.display = "flex";
-        }
+        if (loader) loader.style.display = "flex";
     }
 
-    // Hide loader when page finishes loading
-    window.addEventListener("load", function () {
+    window.addEventListener("load", () => {
         const loader = document.getElementById("page-loader");
-        if (loader) {
-            loader.style.display = "none";
-        }
+        if (loader) loader.style.display = "none";
     });
 </script>
 
