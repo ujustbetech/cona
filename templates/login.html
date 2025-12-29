@@ -1,32 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>PM CONA | Login</title>
+
+    <!-- Main Login CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
 </head>
+
 <body>
 
 <div class="login-wrapper">
     <div class="login-card">
-        <img src="{{ url_for('static', filename='images/PM.webp') }}" class="PM-Cona-logo" alt="PM CONA Logo">
 
+        <!-- PM CONA LOGO -->
+        <div class="logo-container">
+            <img
+                src="{{ url_for('static', filename='images/PM.webp') }}"
+                alt="PM CONA Logo"
+                class="logo"
+            >
+        </div>
 
-     <img
-    src="{{ url_for('static', filename='images/logo.png') }}"
-    class="karyaki-logo"
-    alt="Karyaki Logo"
-  />
+        <!-- KARYAKI LOGO -->
+        <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt="Karyaki Logo"
+            class="karyaki-logo"
+        >
 
-
+        <!-- TITLE -->
         <h2>PM CONA KPI Monitoring</h2>
         <p class="subtitle">Secure Management Login</p>
 
+        <!-- ERROR MESSAGE -->
         {% if error %}
             <div class="error-msg">{{ error }}</div>
         {% endif %}
 
+        <!-- LOGIN FORM -->
         <form method="POST">
             <div class="input-group">
                 <input type="text" name="username" required>
@@ -40,7 +52,6 @@
 
             <button type="submit">LOGIN</button>
         </form>
-
 
     </div>
 </div>

@@ -196,3 +196,36 @@ body {
 .login-card button:hover {
   background: #d85f1a;
 }
+
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    width: 180px;        /* 👈 adjust this */
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 18px;
+}
+
+.logo {
+    max-width: 150px;
+    width: 100%;
+    height: auto;
+}
+
+.karyaki-logo {
+    display: block;
+    margin: 0 auto 18px;
+    max-width: 120px;
+    height: auto;
+}
