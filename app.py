@@ -3,9 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 from flask_caching import Cache
-from urllib.parse import unquote
-
-
 
 # ---------------- COMPONENT IMPORTS ----------------
 from logic.component1_transfers import run_component1
@@ -22,67 +19,58 @@ from logic.component7_cost_optimization import run_component7
 # --------------------------------------------------
 # APP INIT
 # --------------------------------------------------
-
-app = Flask(
-    __name__,
-    static_folder="static",
-    template_folder="templates"
-)
+app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = "kt-secret-key"
 
 cache = Cache(app, config={
     "CACHE_TYPE": "SimpleCache",
-    "CACHE_DEFAULT_TIMEOUT": 1800  # 30 mins
+    "CACHE_DEFAULT_TIMEOUT": 1800
 })
 
 # --------------------------------------------------
-# USERS (TEMP)
+# USERS
 # --------------------------------------------------
 USERS = {"admin": "admin123"}
 
-# --------------------------------------------------
-# KPI → REQUIRED FILES CONFIG
-# --------------------------------------------------
-KPI_FILES = {
-    "component1": [
-        ("transfer_file", "Transfer Lines.xlsx")
+KRA_KPI_MAP = {
+
+    # ---------------- PURCHASE ----------------
+    "Internal Raw Material Transfer": [
+        ("component1", "% of Transfers Completed on Schedule")
     ],
 
-    "component2": [
-        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    "Sales Order & Invoice Management": [
+        ("component4", "% SO to Shipment Completion & O2C Cycle")
     ],
 
-    "component3": [
-        ("po_file", "Purchase Order.xlsx"),
-        ("receipt_file", "Posted Purchase Receipts.xlsx"),
-        ("lines_file", "Purchase Lines.xlsx")
+    "Sales Order & Invoice Management – Short Closure": [
+        ("component6", "% Short-Closed for Non-Shipped SOs")
     ],
 
-    "component4": [
-        ("sales_order_file", "Sales Order.xlsx"),
-        ("sales_invoice_file", "Posted Sales Invoice.xlsx")
+    "Order Delivery Tracking": [
+        ("component3b", "% of deliveries received on time")
     ],
 
-    "component5": [
-        ("po_file", "Purchase Order.xlsx"),
-        ("receipt_file", "Posted Purchase Receipts.xlsx"),
-        ("lines_file", "Purchase Lines.xlsx")
+    # ---------------- SALES & MARKETING ----------------
+    "Inventory and Supply Chain Mgmt": [
+        ("component2", "% of Slow Stock & Dead Stock")
     ],
 
-    "component5a": [
-        ("items_file", "Items.xlsx"),
-        ("po_file", "Purchase Order.xlsx"),
-        ("receipt_file", "Posted Purchase Receipts.xlsx"),
-        ("lines_file", "Purchase Lines.xlsx")
+    "Seasonal Campaign Execution": [
+        ("component5a", "100% RM requisitions fulfilled within defined SLA")
     ],
 
-    "component6": [
-        ("sales_order_file", "Sales Order.xlsx")
+    "Vendor Management": [
+        ("component3a", "95% on-time delivery rate from vendors")
     ],
 
-    "component7": [
-        ("items_file", "Items.xlsx"),
-        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    "Business Development": [
+        ("component3c", "Track and evaluate vendor performance regularly")
+    ],
+
+    "Cost Optimization": [
+        ("component7a", "100% Supply Availability"),
+        ("component7b", "Zero Production Stoppages due to Packaging Shortages")
     ]
 }
 
@@ -99,46 +87,17 @@ def login():
     return render_template("login.html")
 
 # --------------------------------------------------
-# KPI-SPECIFIC UPLOAD
-# --------------------------------------------------
-@app.route("/upload/<component>", methods=["GET", "POST"])
-def upload_component(component):
-    if "user" not in session:
-        return redirect(url_for("login"))
-
-    files_needed = KPI_FILES.get(component)
-    if not files_needed:
-        return "Invalid component", 404
-
-    if request.method == "POST":
-        for field, _ in files_needed:
-            file = request.files.get(field)
-            if not file:
-                return f"Missing file: {field}", 400
-
-            cache.set(field.replace("_file", "_df"), pd.read_excel(file))
-
-        return redirect(url_for(f"{component}_dashboard"))
-
-    return render_template(
-        "upload_kpi.html",
-        component=component,
-        files=files_needed
-    )
-
-# --------------------------------------------------
 # DEPARTMENTS
 # --------------------------------------------------
 @app.route("/departments")
 def departments():
     if "user" not in session:
         return redirect(url_for("login"))
+    return render_template("departments.html")
 
-    return render_template(
-        "departments.html",
-        departments=["Purchase", "Sales & Marketing"]
-    )
-
+# --------------------------------------------------
+# SUB-DEPARTMENTS
+# --------------------------------------------------
 @app.route("/subdepartments/<department>")
 def subdepartments(department):
     if "user" not in session:
@@ -148,120 +107,130 @@ def subdepartments(department):
         return redirect(url_for("kras", department="purchase"))
 
     if department == "sales":
-        subdeps = [
-            ("led", "LED"),
-            ("marketing", "Marketing"),
-            ("packaging", "Packaging"),
-            ("procurement", "Procurement & Vendor Management")
-        ]
-
         return render_template(
             "subdepartments.html",
             department="Sales & Marketing",
-            subdepartments=subdeps
+            subdepartments=[
+                ("led", "LED"),
+                ("marketing", "Marketing"),
+                ("packaging", "Packaging"),
+                ("procurement", "Procurement & Vendor Management")
+            ]
         )
 
     return redirect(url_for("departments"))
 
-
-
-
 # --------------------------------------------------
 # KRAs
-# ---------------------------------
+# --------------------------------------------------
 @app.route("/kras/<department>")
 @app.route("/kras/<department>/<subdepartment>")
 def kras(department, subdepartment=None):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # PURCHASE
     if department == "purchase":
         kras = [
-            "Internal Raw Material Transfer",
-            "Sales Order & Invoice Management",
-            "Sales Order & Invoice Management – Short Closure",
-            "Order Delivery Tracking",
+            ("component1", "Internal Raw Material Transfer"),
+            ("component4", "Sales Order & Invoice Management"),
+            ("component6", "Sales Order & Invoice Management – Short Closure"),
+            ("component3b", "Order Delivery Tracking"),
         ]
+        return render_template("kras.html", department="Purchase", kras=kras)
 
-        return render_template(
-            "kras.html",
-            department="Purchase",
-            subdepartment=None,
-            kras=kras,
-        )
-
-    # SALES
     if department == "sales":
         kra_map = {
-            "led": ["Inventory and Supply Chain Mgmt"],
-            "marketing": ["Seasonal Campaign Execution", "Vendor Management"],
-            "packaging": ["Cost Optimization"],
-            "procurement": ["Cost Optimization", "Business Development"],
+            "led": [("component2", "Inventory and Supply Chain Mgmt")],
+            "marketing": [
+                ("component5a", "Seasonal Campaign Execution"),
+                ("component3a", "Vendor Management")
+            ],
+            "packaging": [("component7a", "Cost Optimization")],
+            "procurement": [
+                ("component7b", "Cost Optimization"),
+                ("component3c", "Business Development")
+            ]
         }
 
         kras = kra_map.get(subdepartment, [])
-
         return render_template(
             "kras.html",
             department="Sales & Marketing",
             subdepartment=subdepartment,
-            kras=kras,
+            kras=kras
         )
 
     return redirect(url_for("departments"))
 
+# --------------------------------------------------
+# KPIs (FROM KRA)
+# --------------------------------------------------
+@app.route("/kpis/<kra>")
+def kpis(kra):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    # Decode URL-safe KRA name
+    kra = unquote(kra)
+
+    kpis = KRA_KPI_MAP.get(kra)
+
+    if not kpis:
+        return f"No KPIs configured for KRA: {kra}", 404
+
+    return render_template(
+        "kpis.html",
+        kra=kra,
+        kpis=kpis
+    )
 
 
 
 # --------------------------------------------------
-# COMPONENT 1 — INTERNAL TRANSFER
+# COMPONENT 1 — TRANSFER
 # --------------------------------------------------
 @app.route("/dashboard/component1")
 def component1_dashboard():
     df = cache.get("transfer_df")
     if df is None:
-        return redirect(url_for("upload_component", component="component1"))
+        return redirect(url_for("upload", component="component1"))
 
     summary, df = run_component1(df)
 
-    status_df = df["Status"].value_counts().reset_index()
-    status_df.columns = ["Status", "Count"]
-
-    bar = px.bar(status_df, x="Status", y="Count", text="Count")
-
-    return render_template(
-        "component1.html",
-        summary=summary,
-        bar_chart=pio.to_html(bar, full_html=False)
+    bar = px.bar(
+        df["Status"].value_counts().reset_index(),
+        x="index", y="Status", text="Status"
     )
 
+    return render_template("component1.html",
+                           summary=summary,
+                           bar_chart=pio.to_html(bar, full_html=False))
+
 # --------------------------------------------------
-# COMPONENT 2 — INVENTORY
+# COMPONENT 2 — INVENTORY (NEW LEDGER)
 # --------------------------------------------------
 @app.route("/dashboard/component2")
 def component2_dashboard():
     df = cache.get("ledger_df")
     if df is None:
-        return redirect(url_for("upload_component", component="component2"))
+        return redirect(url_for("upload", component="component2"))
 
     summary, _ = run_component2(df)
 
-    bar_df = pd.DataFrame({
-        "Status": ["Active", "Slow-Moving", "Dead"],
-        "Count": [
-            summary["Active Items"],
-            summary["Slow-Moving Items"],
-            summary["Dead Items"]
-        ]
-    })
-
-    bar = px.bar(bar_df, x="Status", y="Count", text="Count")
-
-    return render_template(
-        "component2.html",
-        bar_chart=pio.to_html(bar, full_html=False)
+    bar = px.bar(
+        pd.DataFrame({
+            "Status": ["Active", "Slow-Moving", "Dead"],
+            "Count": [
+                summary["Active Items"],
+                summary["Slow-Moving Items"],
+                summary["Dead Items"]
+            ]
+        }),
+        x="Status", y="Count", text="Count"
     )
+
+    return render_template("component2.html",
+                           bar_chart=pio.to_html(bar, full_html=False))
 
 # --------------------------------------------------
 # COMPONENT 3A — VENDOR ON-TIME
@@ -269,7 +238,7 @@ def component2_dashboard():
 @app.route("/dashboard/component3a")
 def component3a_dashboard():
     if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
-        return redirect(url_for("upload_component", component="component3"))
+        return redirect(url_for("upload", component="component3"))
 
     metrics, vendor_df = run_component3a(
         cache.get("po_df"),
@@ -279,72 +248,38 @@ def component3a_dashboard():
 
     bar = px.bar(vendor_df, x="Vendor", y="On_Time_Pct", text="On_Time_Pct")
 
-    return render_template(
-        "component3a_vendor_management.html",
-        metrics=metrics,
-        bar_chart=pio.to_html(bar, full_html=False)
-    )
+    return render_template("component3a_vendor_management.html",
+                           metrics=metrics,
+                           bar_chart=pio.to_html(bar, full_html=False))
 
 # --------------------------------------------------
 # COMPONENT 3B — ORDER DELIVERY
 # --------------------------------------------------
 @app.route("/dashboard/component3b")
 def component3b_dashboard():
-    if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
-        return redirect(url_for("upload_component", component="component3"))
-
     metrics, df = run_component3b(
         cache.get("po_df"),
         cache.get("receipt_df"),
         cache.get("lines_df")
     )
 
-    pie_df = pd.DataFrame({
-        "Status": ["On-Time", "Delayed"],
-        "Count": [metrics["On_Time"], metrics["Delayed"]]
-    })
-
-    pie = px.pie(pie_df, names="Status", values="Count")
-
-    trend_df = df.groupby(["Month", "Delivery_Status"]).size().reset_index(name="Count")
-    bar = px.bar(trend_df, x="Month", y="Count", color="Delivery_Status")
-
-    return render_template(
-        "component3b_order_delivery.html",
-        metrics=metrics,
-        pie_chart=pio.to_html(pie, full_html=False),
-        bar_chart=pio.to_html(bar, full_html=False)
+    pie = px.pie(
+        pd.DataFrame({
+            "Status": ["On-Time", "Delayed"],
+            "Count": [metrics["On_Time"], metrics["Delayed"]]
+        }),
+        names="Status", values="Count"
     )
 
-# --------------------------------------------------
-# COMPONENT 3C — VENDOR PERFORMANCE
-# --------------------------------------------------
-@app.route("/dashboard/component3c")
-def component3c_dashboard():
-    df = cache.get("vendor_performance_df")
-    if df is None:
-        return redirect(url_for("upload_component", component="component3"))
-
-    metrics, _, bucket_df = run_component3c(df)
-
-    bar = px.bar(bucket_df, x="Bucket", y="Vendor_Count", text="Vendor_Count")
-    pie = px.pie(bucket_df, names="Bucket", values="Vendor_Count")
-
-    return render_template(
-        "component3c_vendor_performance.html",
-        metrics=metrics,
-        bar_chart=pio.to_html(bar, full_html=False),
-        pie_chart=pio.to_html(pie, full_html=False)
-    )
+    return render_template("component3b_order_delivery.html",
+                           metrics=metrics,
+                           pie_chart=pio.to_html(pie, full_html=False))
 
 # --------------------------------------------------
 # COMPONENT 4 — SALES O2C
 # --------------------------------------------------
 @app.route("/dashboard/component4")
 def component4_dashboard():
-    if not all([cache.get("sales_order_df"), cache.get("sales_invoice_df")]):
-        return redirect(url_for("upload_component", component="component4"))
-
     metrics, _ = run_component4(
         cache.get("sales_order_df"),
         cache.get("sales_invoice_df")
@@ -357,9 +292,6 @@ def component4_dashboard():
 # --------------------------------------------------
 @app.route("/dashboard/component5")
 def component5_dashboard():
-    if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
-        return redirect(url_for("upload_component", component="component5"))
-
     metrics, df = run_component5(
         cache.get("po_df"),
         cache.get("receipt_df"),
@@ -368,29 +300,18 @@ def component5_dashboard():
 
     bar = px.bar(
         df.groupby("Month").size().reset_index(name="Completed POs"),
-        x="Month",
-        y="Completed POs"
+        x="Month", y="Completed POs"
     )
 
-    return render_template(
-        "component5.html",
-        metrics=metrics,
-        bar_chart=pio.to_html(bar, full_html=False)
-    )
+    return render_template("component5.html",
+                           metrics=metrics,
+                           bar_chart=pio.to_html(bar, full_html=False))
 
 # --------------------------------------------------
 # COMPONENT 5A — RM SLA
 # --------------------------------------------------
 @app.route("/dashboard/component5a")
 def component5a_dashboard():
-    if not all([
-        cache.get("items_df"),
-        cache.get("po_df"),
-        cache.get("receipt_df"),
-        cache.get("lines_df")
-    ]):
-        return redirect(url_for("upload_component", component="component5a"))
-
     metrics, df_monthly = run_component5a_rm(
         cache.get("items_df"),
         cache.get("po_df"),
@@ -400,35 +321,25 @@ def component5a_dashboard():
 
     bar = px.bar(df_monthly, x="Month", y="PO_Count", color="SLA_Status")
 
-    return render_template(
-        "component5a_rm.html",
-        metrics=metrics,
-        bar_chart=pio.to_html(bar, full_html=False)
-    )
+    return render_template("component5a_rm.html",
+                           metrics=metrics,
+                           bar_chart=pio.to_html(bar, full_html=False))
 
 # --------------------------------------------------
 # COMPONENT 6 — SHORT CLOSURE
 # --------------------------------------------------
 @app.route("/dashboard/component6")
 def component6_dashboard():
-    df = cache.get("sales_order_df")
-    if df is None:
-        return redirect(url_for("upload_component", component="component6"))
+    metrics, df_monthly = run_component6(cache.get("sales_order_df"))
 
-    metrics, df_monthly = run_component6(df)
+    bar = px.bar(df_monthly,
+                 x="Month",
+                 y=["Short_Closed", "Not_Short_Closed"],
+                 barmode="stack")
 
-    bar = px.bar(
-        df_monthly,
-        x="Month",
-        y=["Short_Closed", "Not_Short_Closed"],
-        barmode="stack"
-    )
-
-    return render_template(
-        "component6.html",
-        metrics=metrics,
-        bar_chart=pio.to_html(bar, full_html=False)
-    )
+    return render_template("component6.html",
+                           metrics=metrics,
+                           bar_chart=pio.to_html(bar, full_html=False))
 
 # --------------------------------------------------
 # COMPONENT 7 — COST OPTIMIZATION
@@ -436,20 +347,14 @@ def component6_dashboard():
 @app.route("/dashboard/component7a")
 @app.route("/dashboard/component7b")
 def component7_dashboard():
-    if not all([cache.get("items_df"), cache.get("ledger_df")]):
-        return redirect(url_for("upload_component", component="component7"))
-
     df, _, company_view = run_component7(
         cache.get("items_df"),
         cache.get("ledger_df")
     )
 
-    summary = df["Stock_Status"].value_counts().to_dict()
-
     bar = px.bar(
         company_view.groupby("Stock_Status")["Total_Qty"].sum().reset_index(),
-        x="Stock_Status",
-        y="Total_Qty"
+        x="Stock_Status", y="Total_Qty"
     )
 
     template = (
@@ -458,11 +363,8 @@ def component7_dashboard():
         else "component7b_packaging_stoppage.html"
     )
 
-    return render_template(
-        template,
-        summary=summary,
-        bar_chart=pio.to_html(bar, full_html=False)
-    )
+    return render_template(template,
+                           bar_chart=pio.to_html(bar, full_html=False))
 
 # --------------------------------------------------
 # LOGOUT
