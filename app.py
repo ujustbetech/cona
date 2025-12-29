@@ -106,7 +106,7 @@ def subdepartments(department):
     department = department.lower()
 
     # ONLY Sales has sub-departments
-    if department == "Sales & Marketing":
+    if department == "sales":
         return render_template(
             "subdepartments.html",
             department="Sales & Marketing",
