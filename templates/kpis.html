@@ -18,7 +18,8 @@
         }
 
         h2 {
-            margin-bottom: 10px;
+            font-size: 26px;
+            margin-bottom: 6px;
         }
 
         h3 {
@@ -27,24 +28,31 @@
             font-weight: 400;
         }
 
+        /* KPI LIST */
         .kpi-list {
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 20px;
         }
 
+        /* KPI BUTTON */
         .kpi-btn {
             display: flex;
             justify-content: space-between;
             align-items: center;
+
             padding: 22px 30px;
             border-radius: 50px;
-            background: linear-gradient(90deg, #0B3C8A, #2563EB);
+
+            background: linear-gradient(90deg, #2563EB, #3B82F6);
+            color: #ffffff;
+
             text-decoration: none;
-            color: white;
             font-size: 18px;
-            font-weight: 500;
-            transition: 0.3s;
+            font-weight: 600;
+
+            box-shadow: 0 15px 35px rgba(0,0,0,0.35);
+            transition: all 0.3s ease;
         }
 
         .kpi-btn:hover {
@@ -52,8 +60,13 @@
             transform: translateY(-2px);
         }
 
-        .arrow {
-            font-size: 26px;
+        .kpi-btn .arrow {
+            font-size: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .kpi-btn:hover .arrow {
+            transform: translateX(6px);
         }
     </style>
 </head>
@@ -65,11 +78,12 @@
     <h2>{{ kra }}</h2>
     <h3>Select KPI</h3>
 
+    <!-- KPI LIST -->
     <div class="kpi-list">
-        {% for component, label in kpis %}
+        {% for component, kpi_name in kpis %}
             <a href="{{ url_for('upload_component', component=component) }}"
                class="kpi-btn">
-                {{ label }}
+                {{ kpi_name }}
                 <span class="arrow">➜</span>
             </a>
         {% endfor %}

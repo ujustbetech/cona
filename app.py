@@ -4,6 +4,9 @@ import plotly.express as px
 import plotly.io as pio
 from flask_caching import Cache
 
+print("=== LOADING app.py FROM:", __file__)
+
+
 # ---------------- COMPONENT IMPORTS ----------------
 from logic.component1_transfers import run_component1
 from logic.component2_inventory import run_component2
@@ -31,10 +34,49 @@ cache = Cache(app, config={
 # USERS
 # --------------------------------------------------
 USERS = {"admin": "admin123"}
+KPI_FILES = {
+    "component1": [
+        ("transfer_file", "Transfer Lines.xlsx")
+    ],
+    "component2": [
+        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    ],
+    "component3a": [
+        ("po_file", "Purchase Order.xlsx"),
+        ("receipt_file", "Posted Purchase Receipts.xlsx"),
+        ("lines_file", "Purchase Lines.xlsx")
+    ],
+    "component3b": [
+        ("po_file", "Purchase Order.xlsx"),
+        ("receipt_file", "Posted Purchase Receipts.xlsx"),
+        ("lines_file", "Purchase Lines.xlsx")
+    ],
+    "component4": [
+        ("sales_order_file", "Sales Order.xlsx"),
+        ("sales_invoice_file", "Posted Sales Invoice.xlsx")
+    ],
+    "component5a": [
+        ("items_file", "Items.xlsx"),
+        ("po_file", "Purchase Order.xlsx"),
+        ("receipt_file", "Posted Purchase Receipts.xlsx"),
+        ("lines_file", "Purchase Lines.xlsx")
+    ],
+    "component6": [
+        ("sales_order_file", "Sales Order.xlsx")
+    ],
+    "component7a": [
+        ("items_file", "Items.xlsx"),
+        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    ],
+    "component7b": [
+        ("items_file", "Items.xlsx"),
+        ("ledger_file", "sept_oct_nov_item_ledgers.xlsx")
+    ],
+}
 
 KRA_KPI_MAP = {
 
-    # ---------------- PURCHASE ----------------
+    # -------- PURCHASE --------
     "Internal Raw Material Transfer": [
         ("component1", "% of Transfers Completed on Schedule")
     ],
@@ -51,7 +93,7 @@ KRA_KPI_MAP = {
         ("component3b", "% of deliveries received on time")
     ],
 
-    # ---------------- SALES & MARKETING ----------------
+    # -------- SALES & MARKETING --------
     "Inventory and Supply Chain Mgmt": [
         ("component2", "% of Slow Stock & Dead Stock")
     ],
@@ -73,6 +115,35 @@ KRA_KPI_MAP = {
         ("component7b", "Zero Production Stoppages due to Packaging Shortages")
     ]
 }
+
+
+# --------------------------------------------------
+# KPI UPLOAD ROUTE  ✅ MUST COME AFTER KPI_FILES
+# --------------------------------------------------
+@app.route("/upload/<component>", methods=["GET", "POST"])
+def upload_component(component):
+    if "user" not in session:
+        return redirect(url_for("login"))
+
+    files_needed = KPI_FILES.get(component)
+    if not files_needed:
+        return f"Invalid component: {component}", 404
+
+    if request.method == "POST":
+        for field, _ in files_needed:
+            file = request.files.get(field)
+            if not file:
+                return f"Missing file: {field}", 400
+            cache.set(field.replace("_file", "_df"), pd.read_excel(file))
+
+        return redirect(url_for(f"{component}_dashboard"))
+
+    return render_template(
+        "upload_kpi.html",
+        component=component,
+        files=files_needed
+    )
+
 
 # --------------------------------------------------
 # LOGIN
@@ -131,30 +202,33 @@ def kras(department, subdepartment=None):
     if "user" not in session:
         return redirect(url_for("login"))
 
+    # PURCHASE
     if department == "purchase":
         kras = [
-            ("component1", "Internal Raw Material Transfer"),
-            ("component4", "Sales Order & Invoice Management"),
-            ("component6", "Sales Order & Invoice Management – Short Closure"),
-            ("component3b", "Order Delivery Tracking"),
+            "Internal Raw Material Transfer",
+            "Sales Order & Invoice Management",
+            "Sales Order & Invoice Management – Short Closure",
+            "Order Delivery Tracking"
         ]
-        return render_template("kras.html", department="Purchase", kras=kras)
 
-    if department == "Sales & Marketing":
+        return render_template(
+            "kras.html",
+            department="Purchase",
+            subdepartment=None,
+            kras=kras
+        )
+
+    # SALES & MARKETING
+    if department == "sales":
         kra_map = {
-            "led": [("component2", "Inventory and Supply Chain Mgmt")],
-            "marketing": [
-                ("component5a", "Seasonal Campaign Execution"),
-                ("component3a", "Vendor Management")
-            ],
-            "packaging": [("component7a", "Cost Optimization")],
-            "procurement": [
-                ("component7b", "Cost Optimization"),
-                ("component3c", "Business Development")
-            ]
+            "led": ["Inventory and Supply Chain Mgmt"],
+            "marketing": ["Seasonal Campaign Execution", "Vendor Management"],
+            "packaging": ["Cost Optimization"],
+            "procurement": ["Cost Optimization", "Business Development"]
         }
 
         kras = kra_map.get(subdepartment, [])
+
         return render_template(
             "kras.html",
             department="Sales & Marketing",
@@ -165,15 +239,17 @@ def kras(department, subdepartment=None):
     return redirect(url_for("departments"))
 
 # --------------------------------------------------
-# KPIs (FROM KRA)
+# KPIs (STEP 3 – FINAL & CORRECT)
 # --------------------------------------------------
-@app.route("/kpis/<kra>")
-def kpis(kra):
+@app.route("/kpis/<department>/<kra>")
+@app.route("/kpis/<department>/<subdepartment>/<kra>")
+def kpis(department, kra, subdepartment=None):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # Decode URL-safe KRA name
-    kra = unquote(kra)
+    # Decode names safely
+    department = department.lower()
+    kra = kra
 
     kpis = KRA_KPI_MAP.get(kra)
 
@@ -182,6 +258,8 @@ def kpis(kra):
 
     return render_template(
         "kpis.html",
+        department=department,
+        subdepartment=subdepartment,
         kra=kra,
         kpis=kpis
     )
@@ -195,7 +273,7 @@ def kpis(kra):
 def component1_dashboard():
     df = cache.get("transfer_df")
     if df is None:
-        return redirect(url_for("upload", component="component1"))
+        return redirect(url_for("upload_component", component="component1"))
 
     summary, df = run_component1(df)
 
@@ -215,7 +293,7 @@ def component1_dashboard():
 def component2_dashboard():
     df = cache.get("ledger_df")
     if df is None:
-        return redirect(url_for("upload", component="component2"))
+        return redirect(url_for("upload_component", component="component2"))
 
     summary, _ = run_component2(df)
 
@@ -240,7 +318,7 @@ def component2_dashboard():
 @app.route("/dashboard/component3a")
 def component3a_dashboard():
     if not all([cache.get("po_df"), cache.get("receipt_df"), cache.get("lines_df")]):
-        return redirect(url_for("upload", component="component3"))
+        return redirect(url_for("upload_component", component="component3"))
 
     metrics, vendor_df = run_component3a(
         cache.get("po_df"),
@@ -264,6 +342,13 @@ def component3b_dashboard():
         cache.get("receipt_df"),
         cache.get("lines_df")
     )
+    return redirect(url_for("upload_component", component="component3b"))
+
+    metrics, df = run_component3b(
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
 
     pie = px.pie(
         pd.DataFrame({
@@ -282,12 +367,15 @@ def component3b_dashboard():
 # --------------------------------------------------
 @app.route("/dashboard/component4")
 def component4_dashboard():
-    metrics, _ = run_component4(
-        cache.get("sales_order_df"),
-        cache.get("sales_invoice_df")
+   if not all([cache.get("sales_order_df"), cache.get("sales_invoice_df")]):
+        return redirect(url_for("upload_component", component="component4"))
+
+        metrics, _ = run_component4(
+            cache.get("sales_order_df"),
+            cache.get("sales_invoice_df")
     )
 
-    return render_template("component4.html", metrics=metrics)
+        return render_template("component4.html", metrics=metrics)
 
 # --------------------------------------------------
 # COMPONENT 5 — PO SLA
@@ -299,6 +387,15 @@ def component5_dashboard():
         cache.get("receipt_df"),
         cache.get("lines_df")
     )
+
+    return redirect(url_for("upload_component", component="component5"))
+
+    metrics, df = run_component5(
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
+
 
     bar = px.bar(
         df.groupby("Month").size().reset_index(name="Completed POs"),
@@ -320,6 +417,14 @@ def component5a_dashboard():
         cache.get("receipt_df"),
         cache.get("lines_df")
     )
+    return redirect(url_for("upload_component", component="component5a"))
+
+    metrics, df_monthly = run_component5a_rm(
+        cache.get("items_df"),
+        cache.get("po_df"),
+        cache.get("receipt_df"),
+        cache.get("lines_df")
+    )
 
     bar = px.bar(df_monthly, x="Month", y="PO_Count", color="SLA_Status")
 
@@ -332,6 +437,8 @@ def component5a_dashboard():
 # --------------------------------------------------
 @app.route("/dashboard/component6")
 def component6_dashboard():
+    if not cache.get("sales_order_df"):
+        return redirect(url_for("upload_component", component="component6"))
     metrics, df_monthly = run_component6(cache.get("sales_order_df"))
 
     bar = px.bar(df_monthly,
@@ -349,10 +456,9 @@ def component6_dashboard():
 @app.route("/dashboard/component7a")
 @app.route("/dashboard/component7b")
 def component7_dashboard():
-    df, _, company_view = run_component7(
-        cache.get("items_df"),
-        cache.get("ledger_df")
-    )
+    if not all([cache.get("items_df"), cache.get("ledger_df")]):
+        return redirect(url_for("upload_component", component="component7a"))
+
 
     bar = px.bar(
         company_view.groupby("Stock_Status")["Total_Qty"].sum().reset_index(),
@@ -379,4 +485,9 @@ def logout():
 # --------------------------------------------------
 # RUN
 # --------------------------------------------------
-app = app
+# --------------------------------------------------
+# RUN
+# --------------------------------------------------
+if __name__ == "__main__":
+    app.run(debug=True)
+

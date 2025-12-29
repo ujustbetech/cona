@@ -78,7 +78,7 @@
             width: 260px;
         }
 
-        /* ---------- PAGE LOADER ---------- */
+        /* Loader */
         #page-loader {
             position: fixed;
             inset: 0;
@@ -89,10 +89,6 @@
             z-index: 9999;
         }
 
-        .loader-content {
-            text-align: center;
-        }
-
         .spinner {
             width: 55px;
             height: 55px;
@@ -100,7 +96,6 @@
             border-top: 5px solid #F37021;
             border-radius: 50%;
             animation: spin 0.9s linear infinite;
-            margin: 0 auto 14px;
         }
 
         @keyframes spin {
@@ -128,12 +123,32 @@
     <!-- KRA LIST -->
     <div class="kra-list">
         {% for kra in kras %}
-            <a href="{{ url_for('kpis', kra=kra) }}"
-               class="action-btn"
-               onclick="showLoader()">
-                {{ kra }}
-                <span class="arrow">➜</span>
-            </a>
+
+            {% if subdepartment %}
+                <!-- SALES FLOW -->
+                <a href="{{ url_for(
+                        'kpis',
+                        department='sales',
+                        subdepartment=subdepartment,
+                        kra=kra
+                    ) }}"
+                   class="action-btn"
+                   onclick="showLoader()">
+            {% else %}
+                <!-- PURCHASE FLOW -->
+                <a href="{{ url_for(
+                        'kpis',
+                        department='purchase',
+                        kra=kra
+                    ) }}"
+                   class="action-btn"
+                   onclick="showLoader()">
+            {% endif %}
+
+                    {{ kra }}
+                    <span class="arrow">➜</span>
+                </a>
+
         {% endfor %}
     </div>
 
@@ -147,24 +162,14 @@
 
 </div>
 
-<!-- LOADER -->
 <div id="page-loader">
-    <div class="loader-content">
-        <div class="spinner"></div>
-        <p>Loading…</p>
-    </div>
+    <div class="spinner"></div>
 </div>
 
 <script>
     function showLoader() {
-        const loader = document.getElementById("page-loader");
-        if (loader) loader.style.display = "flex";
+        document.getElementById("page-loader").style.display = "flex";
     }
-
-    window.addEventListener("load", () => {
-        const loader = document.getElementById("page-loader");
-        if (loader) loader.style.display = "none";
-    });
 </script>
 
 </body>
