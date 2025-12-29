@@ -1,17 +1,20 @@
 import pandas as pd
 
-ITEM_FILE = "data/Items.xlsx"
-LEDGER_FILE = "data/sept_oct_nov_item_ledgers.xlsx"
 
-# --------------------------------------------------
-# SHARED LOGIC FOR COMPONENT 7
-# --------------------------------------------------
-def run_component7():
-    # ---------- LOAD FILES ----------
-    df_item = pd.read_excel(ITEM_FILE)
-    df_ledger = pd.read_excel(LEDGER_FILE)
+def run_component7(
+    df_item: pd.DataFrame,
+    df_ledger: pd.DataFrame
+):
+    """
+    Component 7 — Cost Optimization / Stock Health
+    Serverless-safe (Vercel compatible)
+    Logic preserved exactly
+    """
 
-    # ---------- CLEAN COLUMNS ----------
+    # ---------- COPY & CLEAN ----------
+    df_item = df_item.copy()
+    df_ledger = df_ledger.copy()
+
     df_item.columns = df_item.columns.str.strip()
     df_ledger.columns = df_ledger.columns.str.strip()
 
@@ -27,7 +30,11 @@ def run_component7():
     })
 
     # ---------- FILTER VALID STOCK ----------
-    df_ledger["Remaining_Qty"] = pd.to_numeric(df_ledger["Remaining_Qty"], errors="coerce").fillna(0)
+    df_ledger["Remaining_Qty"] = pd.to_numeric(
+        df_ledger["Remaining_Qty"],
+        errors="coerce"
+    ).fillna(0)
+
     df_ledger = df_ledger[df_ledger["Remaining_Qty"] > 0]
 
     # ---------- MERGE ----------
@@ -37,7 +44,7 @@ def run_component7():
         how="left"
     )
 
-    # ---------- STOCK BUCKET ----------
+    # ---------- STOCK BUCKET (UNCHANGED LOGIC) ----------
     def stock_bucket(qty):
         if qty <= 50000:
             return "RED"
@@ -50,16 +57,20 @@ def run_component7():
 
     # ---------- LOCATION LEVEL ----------
     location_view = (
-        df.groupby(["Item_No", "Location Code", "Stock_Status"])
+        df.groupby(
+            ["Item_No", "Location Code", "Stock_Status"],
+            as_index=False
+        )
         .agg(Total_Qty=("Remaining_Qty", "sum"))
-        .reset_index()
     )
 
     # ---------- COMPANY LEVEL ----------
     company_view = (
-        df.groupby(["Item_No", "Stock_Status"])
+        df.groupby(
+            ["Item_No", "Stock_Status"],
+            as_index=False
+        )
         .agg(Total_Qty=("Remaining_Qty", "sum"))
-        .reset_index()
     )
 
     return df, location_view, company_view

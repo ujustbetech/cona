@@ -1,20 +1,22 @@
 import pandas as pd
 
-PO_FILE = "data/Purchase order - use order date.xlsx"
-RECEIPT_FILE = "data/Posted Purchase Receipts - Posting date against document no.xlsx"
-LINES_FILE = "data/Purchase Lines -.xlsx"
-
-SLA_DAYS = 10   # change if needed
+SLA_DAYS = 10   # keep configurable
 
 
-def run_component3a():
-
-    # ---------------- LOAD FILES ----------------
-    df_po = pd.read_excel(PO_FILE)
-    df_rcpt = pd.read_excel(RECEIPT_FILE)
-    df_lines = pd.read_excel(LINES_FILE)
+def run_component3a(df_po: pd.DataFrame,
+                    df_rcpt: pd.DataFrame,
+                    df_lines: pd.DataFrame):
+    """
+    Component 3A — Vendor On-Time Delivery Performance
+    Serverless-safe (Vercel compatible)
+    Logic preserved exactly from original version
+    """
 
     # ---------------- CLEAN COLUMN NAMES ----------------
+    df_po = df_po.copy()
+    df_rcpt = df_rcpt.copy()
+    df_lines = df_lines.copy()
+
     for df in [df_po, df_rcpt, df_lines]:
         df.columns = df.columns.str.strip()
 
@@ -26,8 +28,16 @@ def run_component3a():
         "Last Receiving No.": "Last_Receiving_No"
     })
 
-    df_po = df_po[["PO_No", "Vendor", "Order_Date", "Last_Receiving_No"]]
-    df_po["Order_Date"] = pd.to_datetime(df_po["Order_Date"], errors="coerce")
+    df_po = df_po[[
+        "PO_No",
+        "Vendor",
+        "Order_Date",
+        "Last_Receiving_No"
+    ]]
+
+    df_po["Order_Date"] = pd.to_datetime(
+        df_po["Order_Date"], errors="coerce"
+    )
 
     # ---------------- PURCHASE LINES (COMPLETION CHECK) ----------------
     df_lines = df_lines.rename(columns={
@@ -35,13 +45,19 @@ def run_component3a():
         "Outstanding Quantity": "Outstanding_Qty"
     })
 
+    df_lines["Outstanding_Qty"] = pd.to_numeric(
+        df_lines["Outstanding_Qty"], errors="coerce"
+    ).fillna(0)
+
     completed_pos = (
         df_lines
         .groupby("PO_No", as_index=False)["Outstanding_Qty"]
         .sum()
     )
 
-    completed_pos = completed_pos[completed_pos["Outstanding_Qty"] == 0]
+    completed_pos = completed_pos[
+        completed_pos["Outstanding_Qty"] == 0
+    ]
 
     # ---------------- RECEIPT DATE ----------------
     df_rcpt = df_rcpt.rename(columns={
@@ -49,14 +65,23 @@ def run_component3a():
         "Posting Date": "Posting_Date"
     })
 
-    df_rcpt["Posting_Date"] = pd.to_datetime(df_rcpt["Posting_Date"], errors="coerce")
+    df_rcpt["Posting_Date"] = pd.to_datetime(
+        df_rcpt["Posting_Date"], errors="coerce"
+    )
 
-    receipt_dates = df_rcpt[["Receipt_No", "Posting_Date"]]
+    receipt_dates = df_rcpt[[
+        "Receipt_No",
+        "Posting_Date"
+    ]]
 
     # ---------------- MERGE ALL ----------------
     df = (
         df_po
-        .merge(completed_pos[["PO_No"]], on="PO_No", how="inner")
+        .merge(
+            completed_pos[["PO_No"]],
+            on="PO_No",
+            how="inner"
+        )
         .merge(
             receipt_dates,
             left_on="Last_Receiving_No",
@@ -65,10 +90,15 @@ def run_component3a():
         )
     )
 
-    df = df.dropna(subset=["Order_Date", "Posting_Date"])
+    df = df.dropna(
+        subset=["Order_Date", "Posting_Date"]
+    )
 
     # ---------------- DELIVERY DAYS ----------------
-    df["Delivery_Days"] = (df["Posting_Date"] - df["Order_Date"]).dt.days
+    df["Delivery_Days"] = (
+        df["Posting_Date"] - df["Order_Date"]
+    ).dt.days
+
     df = df[df["Delivery_Days"] >= 0]
 
     # ---------------- ON-TIME FLAG ----------------
@@ -85,16 +115,21 @@ def run_component3a():
     )
 
     vendor_kpi["On_Time_Pct"] = round(
-        (vendor_kpi["On_Time_POs"] / vendor_kpi["Total_POs"]) * 100, 2
+        (vendor_kpi["On_Time_POs"] /
+         vendor_kpi["Total_POs"]) * 100,
+        2
     )
 
     # ---------------- OVERALL METRICS ----------------
     metrics = {
-        "Total_Completed_POs": len(df),
+        "Total_Completed_POs": int(len(df)),
         "Overall_On_Time_Pct": round(
-            (df["On_Time"].sum() / len(df)) * 100, 2
+            (df["On_Time"].sum() / len(df)) * 100,
+            2
         ) if len(df) else 0,
-        "Vendors_Below_95": int((vendor_kpi["On_Time_Pct"] < 95).sum())
+        "Vendors_Below_95": int(
+            (vendor_kpi["On_Time_Pct"] < 95).sum()
+        )
     }
 
     return metrics, vendor_kpi

@@ -1,12 +1,15 @@
 import pandas as pd
 
-FILE_PATH = "data/Vendor_Performance.xlsx"
 
+def run_component3c(df: pd.DataFrame):
+    """
+    Component 3C — Vendor Performance (Bucket-wise)
+    Serverless-safe (Vercel compatible)
+    Logic preserved exactly
+    """
 
-def run_component3c():
-
-    # ---------------- LOAD FILE ----------------
-    df = pd.read_excel(FILE_PATH)
+    # ---------------- COPY & CLEAN ----------------
+    df = df.copy()
     df.columns = df.columns.str.strip()
 
     # ---------------- RENAME (SAFE NORMALIZATION) ----------------
@@ -18,20 +21,31 @@ def run_component3c():
     # ---------------- CLEAN ----------------
     df = df.dropna(subset=["Vendor", "Bucket"])
 
+    df["Vendor"] = df["Vendor"].astype(str).str.strip()
+    df["Bucket"] = df["Bucket"].astype(str).str.strip()
+
     # ---------------- BUCKET SUMMARY ----------------
     bucket_summary = (
         df["Bucket"]
         .value_counts()
         .reset_index()
     )
-    bucket_summary.columns = ["Bucket", "Vendor_Count"]
 
-    total_vendors = bucket_summary["Vendor_Count"].sum()
+    bucket_summary.columns = [
+        "Bucket",
+        "Vendor_Count"
+    ]
+
+    total_vendors = int(
+        bucket_summary["Vendor_Count"].sum()
+    )
 
     bucket_summary["Percentage"] = (
-        bucket_summary["Vendor_Count"] / total_vendors * 100
+        bucket_summary["Vendor_Count"] /
+        total_vendors * 100
     ).round(2)
 
+    # ---------------- METRICS ----------------
     metrics = {
         "Total_Vendors": total_vendors
     }

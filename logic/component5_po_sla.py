@@ -1,18 +1,22 @@
 import pandas as pd
 
-PO_FILE = "data/Purchase order - use order date.xlsx"
-RECEIPT_FILE = "data/Posted Purchase Receipts - Posting date against document no.xlsx"
-LINES_FILE = "data/Purchase Lines - 18-11-2025.xlsx"
 
+def run_component5(
+    df_po: pd.DataFrame,
+    df_rcpt: pd.DataFrame,
+    df_lines: pd.DataFrame
+):
+    """
+    Component 5 — Purchase Order SLA (≤90 days vs >90 days)
+    Serverless-safe (Vercel compatible)
+    Logic preserved exactly
+    """
 
-def run_component5():
+    # ---------------- COPY & CLEAN ----------------
+    df_po = df_po.copy()
+    df_rcpt = df_rcpt.copy()
+    df_lines = df_lines.copy()
 
-    # ---------------- LOAD FILES ----------------
-    df_po = pd.read_excel(PO_FILE)
-    df_rcpt = pd.read_excel(RECEIPT_FILE)
-    df_lines = pd.read_excel(LINES_FILE)
-
-    # ---------------- CLEAN COLUMN NAMES ----------------
     for df in [df_po, df_rcpt, df_lines]:
         df.columns = df.columns.str.strip()
 
@@ -26,7 +30,11 @@ def run_component5():
     })
 
     df_po = df_po[["PO_No", "Vendor", "Order_Date"]]
-    df_po["Order_Date"] = pd.to_datetime(df_po["Order_Date"], errors="coerce")
+
+    df_po["PO_No"] = df_po["PO_No"].astype(str).str.strip().str.upper()
+    df_po["Order_Date"] = pd.to_datetime(
+        df_po["Order_Date"], errors="coerce"
+    )
 
     # ==================================================
     # PURCHASE RECEIPT LINES
@@ -37,7 +45,10 @@ def run_component5():
         "Posting Date": "Posting_Date"
     })
 
-    df_rcpt["Posting_Date"] = pd.to_datetime(df_rcpt["Posting_Date"], errors="coerce")
+    df_rcpt["PO_No"] = df_rcpt["PO_No"].astype(str).str.strip().str.upper()
+    df_rcpt["Posting_Date"] = pd.to_datetime(
+        df_rcpt["Posting_Date"], errors="coerce"
+    )
 
     last_receipt = (
         df_rcpt
@@ -54,6 +65,11 @@ def run_component5():
         "Document No": "PO_No",
         "Outstanding Quantity": "Outstanding_Qty"
     })
+
+    df_lines["PO_No"] = df_lines["PO_No"].astype(str).str.strip().str.upper()
+    df_lines["Outstanding_Qty"] = pd.to_numeric(
+        df_lines["Outstanding_Qty"], errors="coerce"
+    ).fillna(0)
 
     outstanding = (
         df_lines
@@ -80,7 +96,7 @@ def run_component5():
     )
 
     # ==================================================
-    # FILTER COMPLETED
+    # FILTER COMPLETED ONLY
     # ==================================================
     df = df[df["PO_Status"] == "Completed"]
     df = df.dropna(subset=["Order_Date", "Last_Receipt_Date"])
@@ -93,29 +109,36 @@ def run_component5():
     ).dt.days
 
     # ==================================================
-    # SLA BUCKET
+    # SLA BUCKET (EXACT LOGIC)
     # ==================================================
     df["SLA_Bucket"] = df["Days_To_Receive"].apply(
         lambda x: "≤ 90 Days" if x <= 90 else "> 90 Days"
     )
 
     # ==================================================
-    # MONTH
+    # MONTH (FOR TREND CHARTS)
     # ==================================================
-    df["Month"] = df["Last_Receipt_Date"].dt.to_period("M").astype(str)
+    df["Month"] = (
+        df["Last_Receipt_Date"]
+        .dt.to_period("M")
+        .astype(str)
+    )
 
     # ==================================================
     # METRICS
     # ==================================================
-    total_pos = len(df)
-    within_sla = (df["SLA_Bucket"] == "≤ 90 Days").sum()
-    beyond_sla = (df["SLA_Bucket"] == "> 90 Days").sum()
+    total_pos = int(len(df))
+    within_sla = int((df["SLA_Bucket"] == "≤ 90 Days").sum())
+    beyond_sla = int((df["SLA_Bucket"] == "> 90 Days").sum())
 
     metrics = {
         "Total_POs": total_pos,
         "Within_SLA": within_sla,
         "Beyond_SLA": beyond_sla,
-        "Within_SLA_Pct": round((within_sla / total_pos) * 100, 2) if total_pos else 0
+        "Within_SLA_Pct": round(
+            (within_sla / total_pos) * 100,
+            2
+        ) if total_pos else 0
     }
 
     return metrics, df

@@ -2,22 +2,23 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-INPUT_FILE = "data/sept_oct_nov_item_ledgers.xlsx"
-OUTPUT_FILE = "outputs/component2_inventory_report.xlsx"
 
-
-def run_component2():
+def run_component2(df: pd.DataFrame):
     """
     Component 2 — Inventory Dormancy Analysis
-    Logic aligned 100% with Component 1 (IPYNB)
+    Serverless-safe (Vercel compatible)
+    Logic preserved exactly from original version
     """
 
     # ----------------------------
-    # LOAD & CLEAN DATA
+    # COPY & CLEAN COLUMN NAMES
     # ----------------------------
-    df = pd.read_excel(INPUT_FILE, engine="openpyxl")
+    df = df.copy()
     df.columns = df.columns.str.strip()
 
+    # ----------------------------
+    # REQUIRED COLUMNS
+    # ----------------------------
     required_cols = [
         "Item No.",
         "Location Code",
@@ -32,11 +33,26 @@ def run_component2():
 
     df = df[required_cols]
 
+    # ----------------------------
+    # TYPE CLEANING
+    # ----------------------------
     df["Posting Date"] = pd.to_datetime(df["Posting Date"], errors="coerce")
+
     df["Quantity"] = pd.to_numeric(df["Quantity"], errors="coerce").fillna(0)
-    df["Remaining Quantity"] = pd.to_numeric(df["Remaining Quantity"], errors="coerce").fillna(0)
-    df["Cost Amount (Actual)"] = pd.to_numeric(df["Cost Amount (Actual)"], errors="coerce").fillna(0)
-    df["Location Code"] = df["Location Code"].astype(str).str.strip().replace("nan", "UNKNOWN")
+    df["Remaining Quantity"] = pd.to_numeric(
+        df["Remaining Quantity"], errors="coerce"
+    ).fillna(0)
+
+    df["Cost Amount (Actual)"] = pd.to_numeric(
+        df["Cost Amount (Actual)"], errors="coerce"
+    ).fillna(0)
+
+    df["Location Code"] = (
+        df["Location Code"]
+        .astype(str)
+        .str.strip()
+        .replace("nan", "UNKNOWN")
+    )
 
     today = pd.Timestamp(datetime.today().date())
 
@@ -71,7 +87,9 @@ def run_component2():
     # MERGE & DORMANCY
     # ----------------------------
     result = current_stock.merge(
-        last_outward, on=["Item No.", "Location Code"], how="left"
+        last_outward,
+        on=["Item No.", "Location Code"],
+        how="left"
     )
 
     result["Days Dormant"] = np.where(
@@ -81,12 +99,17 @@ def run_component2():
     )
 
     # ----------------------------
-    # STATUS CLASSIFICATION (SAME AS IPYNB)
+    # STATUS CLASSIFICATION (UNCHANGED)
     # ----------------------------
     result["Status"] = "Active"
+
     result.loc[result["Days Dormant"] > 60, "Status"] = "Slow-Moving"
     result.loc[result["Days Dormant"] > 365, "Status"] = "Dead"
-    result.loc[result["Last Outward Date"].isna() & (result["On_Hand"] > 0), "Status"] = "Dead"
+
+    result.loc[
+        result["Last Outward Date"].isna() & (result["On_Hand"] > 0),
+        "Status"
+    ] = "Dead"
 
     result["Days Dormant Display"] = result["Days Dormant"].fillna("Never Moved")
 
@@ -108,39 +131,5 @@ def run_component2():
         "Slow %": (slow_value / total_value * 100) if total_value else 0,
         "Dead %": (dead_value / total_value * 100) if total_value else 0,
     }
-
-    # ----------------------------
-    # EXPORT EXCEL
-    # ----------------------------
-    with pd.ExcelWriter(OUTPUT_FILE, engine="openpyxl") as writer:
-        pd.DataFrame(
-            {
-                "KPI": summary.keys(),
-                "Value": summary.values(),
-            }
-        ).to_excel(writer, sheet_name="KPI Summary", index=False)
-
-        result[
-            [
-                "Item No.",
-                "Location Code",
-                "Description",
-                "Category",
-                "Subcategory",
-                "On_Hand",
-                "Stock_Value",
-                "Last Outward Date",
-                "Days Dormant Display",
-                "Status",
-            ]
-        ].to_excel(writer, sheet_name="All Items", index=False)
-
-        result[result["Status"] == "Slow-Moving"].to_excel(
-            writer, sheet_name="Slow-Moving", index=False
-        )
-
-        result[result["Status"] == "Dead"].to_excel(
-            writer, sheet_name="Dead", index=False
-        )
 
     return summary, result

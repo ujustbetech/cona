@@ -1,5 +1,7 @@
-Flask
+flask
 pandas
-plotly
-openpyxl
 numpy
+openpyxl
+plotly
+matplotlib
+seaborn

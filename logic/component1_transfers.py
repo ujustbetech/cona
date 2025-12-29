@@ -1,51 +1,67 @@
 import pandas as pd
 
-INPUT_FILE = "data/Transfer Lines.xlsx"
-OUTPUT_FILE = "outputs/component1_transfer_report.xlsx"
+def run_component1(df: pd.DataFrame):
+    """
+    Serverless-safe version
+    Expects a DataFrame (already loaded from Excel in app.py)
+    """
 
-def run_component1():
-    df = pd.read_excel(INPUT_FILE)
+    # -------------------------
+    # CLEAN COLUMN NAMES
+    # -------------------------
+    df = df.copy()
     df.columns = df.columns.str.strip()
 
-    # Required columns only
-    df = df[
-        [
-            "Document No.",
-            "Transfer-from Code",
-            "Transfer-to Code",
-            "Quantity",
-            "Quantity Shipped",
-            "Quantity Received",
-            "Created At"
-        ]
+    # -------------------------
+    # REQUIRED COLUMNS
+    # -------------------------
+    required_cols = [
+        "Document No.",
+        "Transfer-from Code",
+        "Transfer-to Code",
+        "Quantity",
+        "Quantity Shipped",
+        "Quantity Received",
+        "Created At"
     ]
 
-    # Cleaning
+    df = df[required_cols]
+
+    # -------------------------
+    # BASIC CLEANING
+    # -------------------------
     df = df.dropna(subset=["Document No.", "Created At"])
+
     for col in ["Quantity", "Quantity Shipped", "Quantity Received"]:
         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
     df["Transfer-from Code"] = df["Transfer-from Code"].astype(str)
     df["Transfer-to Code"] = df["Transfer-to Code"].astype(str)
+
     df["Created At"] = pd.to_datetime(df["Created At"], errors="coerce")
     df = df.dropna(subset=["Created At"])
 
-    # LF → LF filter
+    # -------------------------
+    # LF → LF FILTER
+    # -------------------------
     df = df[
         df["Transfer-from Code"].str.startswith("LF-") &
         df["Transfer-to Code"].str.startswith("LF-")
     ]
 
+    # -------------------------
+    # AGGREGATION LOGIC
+    # -------------------------
     records = []
 
-    for doc, g in df.groupby("Document No."):
+    for doc_no, g in df.groupby("Document No."):
         total_qty = g["Quantity"].sum()
-        shipped = g["Quantity Shipped"].sum()
-        received = g["Quantity Received"].sum()
+        shipped_qty = g["Quantity Shipped"].sum()
+        received_qty = g["Quantity Received"].sum()
 
-        if received >= shipped:
+        if received_qty >= shipped_qty:
             status = "Completed"
-        elif shipped >= total_qty:
+        elif shipped_qty >= total_qty:
             status = "In Transit"
         else:
             status = "Partially Shipped"
@@ -53,20 +69,20 @@ def run_component1():
         created_at = g["Created At"].min()
 
         records.append({
-            "Document No": doc,
+            "Document No": doc_no,
             "Total Qty": total_qty,
-            "Shipped Qty": shipped,
-            "Received Qty": received,
-            "In Transit Qty": shipped - received,
+            "Shipped Qty": shipped_qty,
+            "Received Qty": received_qty,
+            "In Transit Qty": shipped_qty - received_qty,
             "Status": status,
             "Month": created_at.strftime("%Y-%m")
         })
 
     df_orders = pd.DataFrame(records)
 
-    # Save output
-    df_orders.to_excel(OUTPUT_FILE, index=False)
-
+    # -------------------------
+    # SUMMARY
+    # -------------------------
     summary = {
         "Total": len(df_orders),
         "Completed": int((df_orders["Status"] == "Completed").sum()),

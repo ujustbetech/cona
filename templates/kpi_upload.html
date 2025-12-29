@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PM CONA | Upload Data</title>
+
+    <!-- Main App Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body {
+            background: #0b1f3a; /* PM CONA dark blue */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-wrapper {
+            width: 100%;
+            max-width: 520px;
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            max-height: 50px;
+        }
+
+        h2 {
+            margin: 10px 0;
+            color: #0b1f3a;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .upload-box {
+            border: 2px dashed #c7d2fe;
+            border-radius: 12px;
+            padding: 30px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        .upload-box:hover {
+            border-color: #2563eb;
+            background: #eef2ff;
+        }
+
+        .upload-box input {
+            display: none;
+        }
+
+        .upload-box span {
+            display: block;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .upload-box strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 15px;
+            color: #2563eb;
+        }
+
+        button {
+            margin-top: 25px;
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(90deg, #1e3a8a, #2563eb);
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 18px;
+            font-size: 13px;
+            color: #6b7280;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="upload-wrapper">
+
+    <!-- LOGO -->
+    <div class="logo">
+        <img src="{{ url_for('static', filename='img/PM-Cona Logo_White.webp') }}"
+             alt="PM CONA Logo">
+    </div>
+
+    <h2>Upload Excel Data</h2>
+    <p class="subtitle">
+        Please upload the required Excel file(s) to generate the dashboard
+    </p>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <label class="upload-box">
+            <input type="file"
+                   name="excel_file"
+                   accept=".xlsx,.xls"
+                   required>
+            <span>Click to select Excel file</span>
+            <strong>.xlsx / .xls supported</strong>
+        </label>
+
+        <button type="submit">
+            Generate Dashboard
+        </button>
+    </form>
+
+    <a class="back-link"
+       href="javascript:history.back()">
+        ← Back
+    </a>
+
+</div>
+
+</body>
+</html>
