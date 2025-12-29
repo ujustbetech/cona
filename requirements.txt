@@ -5,3 +5,6 @@ openpyxl
 plotly
 matplotlib
 seaborn
+flask-caching
+openpyxl
+plotly
