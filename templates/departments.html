@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Departments</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            font-family: "Segoe UI", sans-serif;
+            color: #fff;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            margin-bottom: 30px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .dept-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* COMMON BUTTON STYLE */
+        .action-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 28px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #fff;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #8e2de2, #4a00e0);
+        }
+
+        .arrow {
+            font-size: 22px;
+            opacity: 0.9;
+        }
+
+        /* ---------- PAGE BACKGROUND ---------- */
+body {
+  background: linear-gradient(135deg, #082F6B, #0B3C8A);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #ffffff;
+}
+
+/* ---------- PAGE HEADER ---------- */
+.page-title {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #cbd5e1;
+  margin-bottom: 30px;
+}
+
+/* ---------- DEPARTMENT LIST ---------- */
+.department-list {
+  max-width: 900px;
+}
+
+/* ---------- DEPARTMENT BUTTON ---------- */
+.department-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 30px;
+  border-radius: 50px;
+  background: linear-gradient(90deg, #0B3C8A, #2563EB);
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 22px;
+  transition: all 0.3s ease;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- HOVER EFFECT ---------- */
+.department-btn:hover {
+  background: linear-gradient(90deg, #F37021, #FF8A3D);
+  transform: translateY(-2px);
+}
+
+/* ---------- ARROW ---------- */
+.department-btn .arrow {
+  font-size: 26px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.department-btn:hover .arrow {
+  transform: translateX(6px);
+}
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>PM CONA</h2>
+    <h3>Select Department</h3>
+
+    <div class="dept-list">
+        {% for dept in departments %}
+            <a href="{{ url_for('subdepartments', department=dept) }}"
+               class="action-btn btn-blue">
+                {{ dept }}
+                <span class="arrow">➜</span>
+            </a>
+        {% endfor %}
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Cost Optimization – Zero Production Stoppages (Packaging)</h2>
+
+<p><b>Packaging Material Risk Status</b></p>
+<ul>
+  <li>GREEN: {{ summary.get("GREEN", 0) }}</li>
+  <li>YELLOW: {{ summary.get("YELLOW", 0) }}</li>
+  <li>RED (Critical): {{ summary.get("RED", 0) }}</li>
+</ul>
+
+{{ bar_chart | safe }}
+
+{% endblock %}

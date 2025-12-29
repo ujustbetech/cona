@@ -1,0 +1,16 @@
+
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Cost Optimization – 100% Supply Availability</h2>
+
+<p><b>Stock Status Summary</b></p>
+<ul>
+  <li>GREEN: {{ summary.get("GREEN", 0) }}</li>
+  <li>YELLOW: {{ summary.get("YELLOW", 0) }}</li>
+  <li>RED: {{ summary.get("RED", 0) }}</li>
+</ul>
+
+{{ bar_chart | safe }}
+
+{% endblock %}

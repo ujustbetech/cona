@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sub-Departments</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            font-family: "Segoe UI", sans-serif;
+            color: #fff;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .breadcrumb {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            margin-bottom: 30px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .subdept-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .action-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 28px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #fff;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #8e2de2, #4a00e0);
+        }
+
+        .btn-teal {
+            background: linear-gradient(135deg, #1cd8d2, #2f80ed);
+        }
+
+        .arrow {
+            font-size: 22px;
+            opacity: 0.9;
+        }
+
+        .back-btn {
+            margin-top: 40px;
+            width: 260px;
+        }
+
+        /* ---------- PAGE BACKGROUND ---------- */
+body {
+  background: linear-gradient(135deg, #082F6B, #0B3C8A);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #ffffff;
+}
+
+/* ---------- PAGE HEADER ---------- */
+.page-title {
+  font-size: 26px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: #cbd5e1;
+  margin-bottom: 30px;
+}
+
+/* ---------- DEPARTMENT LIST ---------- */
+.department-list {
+  max-width: 900px;
+}
+
+/* ---------- DEPARTMENT BUTTON ---------- */
+.department-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 30px;
+  border-radius: 50px;
+  background: linear-gradient(90deg, #0B3C8A, #2563EB);
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 22px;
+  transition: all 0.3s ease;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* ---------- HOVER EFFECT ---------- */
+.department-btn:hover {
+  background: linear-gradient(90deg, #F37021, #FF8A3D);
+  transform: translateY(-2px);
+}
+
+/* ---------- ARROW ---------- */
+.department-btn .arrow {
+  font-size: 26px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.department-btn:hover .arrow {
+  transform: translateX(6px);
+}
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="breadcrumb">
+        {{ department }}
+    </div>
+
+    <h2>{{ department }}</h2>
+    <h3>Select Sub-Department</h3>
+
+    <div class="subdept-list">
+        {% for sub in subdepartments %}
+            <a href="{{ url_for('kras',
+                                department=department,
+                                subdepartment=sub) }}"
+               class="action-btn btn-teal">
+                {{ sub }}
+                <span class="arrow">➜</span>
+            </a>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('departments') }}"
+       class="action-btn btn-purple back-btn">
+        Back to Departments
+        <span class="arrow">➜</span>
+    </a>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+
+{% extends "base.html" %}
+{% block content %}
+
+
+<h2>Seasonal Campaign Execution</h2>
+
+<h3>KPI: 100% RM requisitions fulfilled within defined SLA</h3>
+
+<div>
+  <strong>Total Completed POs:</strong> {{ metrics.Total_POs }} <br>
+  <strong>Within SLA (%):</strong> {{ metrics.Within_SLA_Pct }}%
+</div>
+
+<hr>
+
+<h3>SLA Performance</h3>
+{{ sla_bar | safe }}
+
+<hr>
+
+<h3>SLA Distribution</h3>
+{{ sla_pie | safe }}
+
+<hr>
+
+<h3>Month-on-Month Trend</h3>
+{{ mom_bar | safe }}
+
+
+{% endblock %}

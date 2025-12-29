@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+{% extends "base.html" %}
+{% block content %}
+
+<html>
+<head>
+  <title>Component 6 – Short Closed SOs</title>
+</head>
+<body>
+
+<h2>Component 6: % Short-Closed for Non-Shipped SOs</h2>
+
+<ul>
+  <li>Total Non-Shipped SOs: <b>{{ metrics.Total_Non_Shipped }}</b></li>
+  <li>Short-Closed SOs: <b>{{ metrics.Short_Closed }}</b></li>
+  <li>Not Short-Closed SOs: <b>{{ metrics.Not_Short_Closed }}</b></li>
+  <li>Short-Closed %: <b>{{ metrics.Short_Closed_Pct }}%</b></li>
+</ul>
+
+<hr>
+
+{{ bar_chart|safe }}
+
+</body>
+</html>
+
+{% endblock %}

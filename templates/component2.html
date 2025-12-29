@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+{% block content %}
+
+
+<html>
+<head>
+    <title>Component 2 – Inventory & Supply Chain</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .kpi-box {
+            display: inline-block;
+            padding: 15px 25px;
+            margin-right: 20px;
+            background: #f4f6f8;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        .charts {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Inventory & Supply Chain Management</h2>
+
+<!-- KPI CARDS -->
+<div class="kpis">
+    <div class="kpi-box">
+        <strong>% Slow Stock</strong><br>
+        {{ slow_pct }}%
+    </div>
+
+    <div class="kpi-box">
+        <strong>% Dead Stock</strong><br>
+        {{ dead_pct }}%
+    </div>
+</div>
+
+<!-- CHARTS -->
+<div class="charts">
+    <h3>Inventory Classification</h3>
+    {{ bar_chart | safe }}
+</div>
+
+<div class="charts">
+    <h3>Inventory Status Distribution</h3>
+    {{ pie_chart | safe }}
+</div>
+
+<br>
+<a href="/departments">⬅ Back to Departments</a>
+
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<h2>Business Development</h2>
+<h4>Vendor Performance Evaluation</h4>
+
+<hr>
+
+<h3>Key Metrics</h3>
+<ul>
+  <li>Total Vendors Evaluated: {{ metrics.Total_Vendors }}</li>
+</ul>
+
+<hr>
+
+<h3>Vendor Distribution by Performance</h3>
+<div>
+  {{ bar_chart | safe }}
+</div>
+
+<hr>
+
+<h3>Performance Share</h3>
+<div>
+  {{ pie_chart | safe }}
+</div>
+
+
+{% endblock %}

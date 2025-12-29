@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Vendor Management</h2>
+<h4>95% On-Time Delivery Rate from Vendors</h4>
+
+<hr>
+
+<h3>Key Metrics</h3>
+<ul>
+  <li>Total Completed POs: {{ metrics.Total_Completed_POs }}</li>
+  <li>Overall On-Time Delivery %: {{ metrics.Overall_On_Time_Pct }}%</li>
+  <li>Vendors Below 95% SLA: {{ metrics.Vendors_Below_95 }}</li>
+</ul>
+
+<hr>
+
+<h3>Vendor On-Time Delivery Performance</h3>
+<div>
+  {{ bar_chart | safe }}
+</div>
+
+
+{% endblock %}

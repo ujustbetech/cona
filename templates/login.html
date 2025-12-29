@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PM CONA | Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <img src="{{ url_for('static', filename='images/PM-Cona Logo_White.webp') }}"
+     class="pm-logo"
+     alt="PM CONA Logo">
+
+     <img
+    src="{{ url_for('static', filename='images/logo.png') }}"
+    class="karyaki-logo"
+    alt="Karyaki Logo"
+  />
+
+
+        <h2>PM CONA KPI Monitoring</h2>
+        <p class="subtitle">Secure Management Login</p>
+
+        {% if error %}
+            <div class="error-msg">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="input-group">
+                <input type="text" name="username" required>
+                <label>Username</label>
+            </div>
+
+            <div class="input-group">
+                <input type="password" name="password" required>
+                <label>Password</label>
+            </div>
+
+            <button type="submit">LOGIN</button>
+        </form>
+
+
+    </div>
+</div>
+
+</body>
+</html>

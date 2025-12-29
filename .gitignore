@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+venv/
+.env
+
+# Ignore Excel data files
+data/*.xlsx
+data/*.xls
+
+# Ignore generated outputs
+outputs/*.xlsx
+outputs/*.xls

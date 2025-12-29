@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<h2>Order Delivery Tracking</h2>
+<h4>% of Deliveries Received On Time</h4>
+
+<hr>
+
+<h3>Key Metrics</h3>
+<ul>
+  <li>Total Deliveries: {{ metrics.Total_Deliveries }}</li>
+  <li>On-Time Deliveries: {{ metrics.On_Time }}</li>
+  <li>Delayed Deliveries: {{ metrics.Delayed }}</li>
+  <li>On-Time %: {{ metrics.On_Time_Pct }}%</li>
+</ul>
+
+<hr>
+
+<h3>On-Time vs Delayed Deliveries</h3>
+<div>
+  {{ pie_chart | safe }}
+</div>
+
+<hr>
+
+<h3>Monthly Delivery Trend</h3>
+<div>
+  {{ bar_chart | safe }}
+</div>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<h2>Internal Raw Material Transfer</h2>
+<h3>% of Transfers Completed on Schedule</h3>
+
+<p><b>Total Transfer Orders:</b> {{ summary.Total }}</p>
+<p><b>Completed:</b> {{ summary.Completed }}</p>
+<p><b>In Transit:</b> {{ summary["In Transit"] }}</p>
+<p><b>Partially Shipped:</b> {{ summary["Partially Shipped"] }}</p>
+
+<h3>On-Time Completion %: {{ on_time_pct }}%</h3>
+
+<hr>
+
+<h3>Transfer Order Status</h3>
+{{ status_bar|safe }}
+
+<hr>
+
+<h3>Completion Ratio</h3>
+{{ completion_pie|safe }}
+
+<hr>
+
+<h3>Month-on-Month Pending Transfers</h3>
+{{ mom_bar|safe }}
+
+<br>
+<a href="/departments">← Back</a>
+
+
+{% endblock %}

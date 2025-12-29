@@ -1,0 +1,16 @@
+<h2>RM Requisitions – Quarterly SLA</h2>
+
+<div class="kpi-cards">
+  <div class="card">
+    <h3>Total RM POs</h3>
+    <p>{{ metrics.Total_RM_POs }}</p>
+  </div>
+  <div class="card">
+    <h3>Overall On-Time %</h3>
+    <p>{{ metrics['Overall_On_Time_%'] }}%</p>
+  </div>
+</div>
+
+<div class="chart">
+  {{ bar_chart | safe }}
+</div>
