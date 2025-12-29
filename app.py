@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 from flask_caching import Cache
+from urllib.parse import unquote
+
 
 # ---------------- COMPONENT IMPORTS ----------------
 from logic.component1_transfers import run_component1
@@ -136,32 +138,41 @@ def subdepartments(department):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    department = department.strip()
+    # 🔥 DECODE URL
+    department = unquote(department).strip()
 
-    # 🔥 PURCHASE → DIRECT TO KRAs
+    # =========================
+    # PURCHASE → DIRECT TO KRAs
+    # =========================
     if department == "Purchase":
         return redirect(url_for("kras", department=department))
 
-    # 🔥 ONLY Sales & Marketing has sub-departments
-    subdeps = [
-        "LED",
-        "Marketing",
-        "Packaging",
-        "Procurement & Vendor Management"
-    ]
+    # =========================
+    # SALES & MARKETING
+    # =========================
+    if department == "Sales & Marketing":
+        subdeps = [
+            "LED",
+            "Marketing",
+            "Packaging",
+            "Procurement & Vendor Management"
+        ]
 
-    return render_template(
-        "subdepartments.html",
-        department=department,
-        subdepartments=subdeps
-    )
+        return render_template(
+            "subdepartments.html",
+            department=department,
+            subdepartments=subdeps
+        )
+
+    # =========================
+    # SAFETY FALLBACK
+    # =========================
+    return redirect(url_for("departments"))
 
 
 # --------------------------------------------------
 # KRAs
-# --------------------------------------------------
-from urllib.parse import unquote
-
+# ---------------------------------
 @app.route("/kras/<department>")
 @app.route("/kras/<department>/<subdepartment>")
 def kras(department, subdepartment=None):
