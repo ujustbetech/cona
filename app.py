@@ -94,23 +94,23 @@ KRA_KPI_MAP = {
     ],
 
     # -------- SALES & MARKETING --------
-    "Inventory and Supply Chain Mgmt": [
+    "Inventory_and_Supply_Chain_Mgmt": [
         ("component2", "% of Slow Stock & Dead Stock")
     ],
 
-    "Seasonal Campaign Execution": [
+    "Seasonal_Campaign_Execution": [
         ("component5a", "100% RM requisitions fulfilled within defined SLA")
     ],
 
-    "Vendor Management": [
+    "Vendor_Management": [
         ("component3a", "95% on-time delivery rate from vendors")
     ],
 
-    "Business Development": [
+    "Business_Development": [
         ("component3c", "Track and evaluate vendor performance regularly")
     ],
 
-    "Cost Optimization": [
+    "Cost_Optimization": [
         ("component7a", "100% Supply Availability"),
         ("component7b", "Zero Production Stoppages due to Packaging Shortages")
     ]
@@ -205,10 +205,10 @@ def kras(department, subdepartment=None):
     # PURCHASE
     if department == "purchase":
         kras = [
-            "Internal Raw Material Transfer",
-            "Sales Order & Invoice Management",
-            "Sales Order & Invoice Management – Short Closure",
-            "Order Delivery Tracking"
+            ("internal_raw_material_transfer", "Internal Raw Material Transfer"),
+            ("sales_order_invoice_management", "Sales Order & Invoice Management"),
+            ("short_closure", "Sales Order & Invoice Management – Short Closure"),
+            ("order_delivery_tracking", "Order Delivery Tracking")
         ]
 
         return render_template(
@@ -221,10 +221,20 @@ def kras(department, subdepartment=None):
     # SALES & MARKETING
     if department == "sales":
         kra_map = {
-            "led": ["Inventory and Supply Chain Mgmt"],
-            "marketing": ["Seasonal Campaign Execution", "Vendor Management"],
-            "packaging": ["Cost Optimization"],
-            "procurement": ["Cost Optimization", "Business Development"]
+            "led": [
+                ("inventory_supply_chain", "Inventory and Supply Chain Mgmt")
+            ],
+            "marketing": [
+                ("seasonal_campaign_execution", "Seasonal Campaign Execution"),
+                ("vendor_management", "Vendor Management")
+            ],
+            "packaging": [
+                ("cost_optimization", "Cost Optimization")
+            ],
+            "procurement": [
+                ("cost_optimization", "Cost Optimization"),
+                ("business_development", "Business Development")
+            ]
         }
 
         kras = kra_map.get(subdepartment, [])
@@ -238,6 +248,7 @@ def kras(department, subdepartment=None):
 
     return redirect(url_for("departments"))
 
+
 # --------------------------------------------------
 # KPIs (STEP 3 – FINAL & CORRECT)
 # --------------------------------------------------
@@ -246,10 +257,6 @@ def kras(department, subdepartment=None):
 def kpis(department, kra, subdepartment=None):
     if "user" not in session:
         return redirect(url_for("login"))
-
-    # Decode names safely
-    department = department.lower()
-    kra = kra
 
     kpis = KRA_KPI_MAP.get(kra)
 

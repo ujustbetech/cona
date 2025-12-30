@@ -122,7 +122,8 @@
 
     <!-- KRA LIST -->
     <div class="kra-list">
-        {% for kra in kras %}
+        {% for kra_slug, kra_label in kras %}
+
 
             {% if subdepartment %}
                 <!-- SALES FLOW -->
@@ -137,15 +138,18 @@
             {% else %}
                 <!-- PURCHASE FLOW -->
                 <a href="{{ url_for(
-                        'kpis',
-                        department='purchase',
-                        kra=kra
-                    ) }}"
-                   class="action-btn"
+                 'kpis',
+                department=department|lower,
+                subdepartment=subdepartment if subdepartment else 'none',
+                kra=kra_slug
+                ) }}"
+                class="action-btn">
+
                    onclick="showLoader()">
             {% endif %}
 
-                    {{ kra }}
+                    {{ kra_label }}
+
                     <span class="arrow">➜</span>
                 </a>
 
